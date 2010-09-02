@@ -1,0 +1,5 @@
+; $Id: cablecast.info,v 1.1 2010/07/20 22:18:47 raytiley Exp $
+name = Cablecast
+description = Creates a cablecast_show and cablecast_project node types as well as some taxonomy.  Attempts to sync it all to a Cablecast server
+core = 6.x
+

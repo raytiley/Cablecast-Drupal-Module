@@ -1,0 +1,266 @@
+<?php
+// $Id: cablecast.install,v 1.1 2010/07/20 22:18:47 raytiley Exp $
+
+/**
+  * Implementation of hook_install().
+  */
+function cablecast_install() {
+	module_load_include('module', 'taxonomy', 'taxonomy');
+	drupal_install_schema('cablecast_show');
+	drupal_install_schema('cablecast_schedule_event');
+	drupal_install_schema('cablecast_project');
+	
+	$vocab = array(
+		'name' => 'Cablecast Channels',
+		'description' => t('Channels available on the Cablecast Server.  Used for Schedule'),
+		'help' => 0,
+		'relations' => 0,
+		'hierarchy' =>0,
+		'multiple' => 0,
+		'required' => 1,
+		'tags'  => 0,
+		'module' => 'cablecast',
+		'weight' => 0,
+		'nodes' => array('cablecast_schedule_event' => 1),
+		);
+		
+		taxonomy_save_vocabulary($vocab);
+		
+		$vid = db_result(
+		    db_query(
+		      "SELECT vid FROM {vocabulary} WHERE name = '%s'",
+		      'Cablecast Channels'
+		    )
+		  );
+		watchdog("Cablecast", $vid);
+}
+
+/**
+  * Implementation of hook_uninstall().
+  */
+function cablecast_uninstall() {
+	drupal_uninstall_schema('cablecast_show');
+	drupal_uninstall_schema('cablecast_schedule_event');
+}
+
+/**
+  * Implementation of hook_schema().
+  */
+function cablecast_show_schema() {
+	$schema['cablecast_show'] = array(
+		'description'  =>  t("Stores all the meta data about a Cablecast show."),
+		'fields'  => array(
+			'nid'  => array(
+				'type'  => 'int',
+				'unsigned'  => TRUE,
+				'not null'  => TRUE,
+				'default'  => 0,
+				'description'  => t("The shows {node}.nid."),
+				),
+			'vid'  => array(
+				'type'  =>  'int',
+				'unsigned'  => TRUE,
+				'not null'  => TRUE,
+				'default'  => 0,
+				'description'  => t("The shows {node_revisions}.vid."),
+				),
+			'showID'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Cablecast ShowID.'),
+				),
+			'internalTitle'  => array(
+				'type' => 'text',
+				'not null' =>  FALSE,
+				'description' => t("In Cablecast this field is called the title."),
+				),
+			'trt'  =>  array(
+				'type'  =>  'int',
+				'not null'  => FALSE,
+				'description'  =>  t("Total Run Time in seconds."),
+				),
+			'event_date'  =>  array(
+				'type'  =>  'int',
+				'description'  =>  t("Show records Event Date."),
+				),
+			'category_id' =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  TRUE,
+				'description'  =>  t("Cablecast Show's Category ID used to link taxonomy"),
+				),
+			'producer_id'  =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  'true',
+				'description'  =>  t("Cablecast Show's Producer ID used to link to drupal user"),
+				),
+			'rating'  =>  array(
+				'type'  =>  'text',
+				'not null' => FALSE,
+				'description'  =>  t("A Cablecast Show's Rating"),
+				),
+			'dsk_bug_text'  =>  array(
+				'type'  =>  'text',
+				'description'  =>  t("Cablecast Show's bug text."),
+				),
+			'dsk_crawl_text'  =>  array(
+				'type'  =>  'text',
+				'description'  => t("Cablecast Show's Crawl Text."),
+				),
+			'dsk_crawl_length'  =>  array(
+				'type'  =>  'int',
+				'description'  =>  t("Cablecast Show's dsk  crawl length in seconds"),
+				),
+			),
+		'primary key'  => array('nid', 'vid'),
+		'unique keys'  => array(
+			'vid'  =>  array('vid')
+			),
+			'indexes'  =>  array(
+				'nid' => array('nid')
+			),
+		);
+		
+		return $schema;
+}
+
+function cablecast_schedule_event_schema(){
+	$schema['cablecast_schedule_event'] = array(
+		'description'  =>  t("Stores all the details of a Cablecast Schedule Event."),
+		'fields'  =>  array(
+			'nid'  =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  TRUE,
+				'not null'  =>  TRUE,
+				'default'  =>  0,
+				'description'  =>  t("The schedule events {node}.nid."),
+				),
+			'vid'  =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  TRUE,
+				'not null'  =>  TRUE,
+				'default'  =>  0,
+				'description'  =>  t("The shows {node_revisions}.vid."),
+				),
+			'cablecast_show_nid'  => array(
+				'type'  =>  'int',
+				'unsigned'  => TRUE,
+				'not null'  => TRUE,
+				'default'  => 0,
+				'description'  => t("The cablecast shows {node}.nid."),
+				),
+			'scheduleID'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Cablecast ScheduleID.'),
+				),
+			'showID'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Cablecast ShowID'),
+				),
+			'start_time'  => array(
+				'type' => 'int',
+				'unsigned' => FALSE,
+				'default' =>  0,
+				'not null'  =>  TRUE,
+				'description'  => t('Schedule Event Start Time.'),
+				),
+			'end_time'  => array(
+				'type' => 'int',
+				'unsigned' => FALSE,
+				'default' =>  0,
+				'not null'  =>  TRUE,
+				'description'  => t('Schedule Event End Time'),
+				),
+			'run_bump'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Schedule Event Run Bump.'),
+				),
+			'cg_exempt'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Schedule Event CG Status.'),
+				),
+			),
+			'primary key'  => array('nid', 'vid'),
+			'unique keys'  => array(
+				'vid'  =>  array('vid')
+				),
+				'indexes'  =>  array(
+					'nid' => array('nid')
+				),
+			);
+			
+			return $schema;
+}
+
+function cablecast_project_schema()  {
+	$schema['cablecast_project'] = array(
+		'description'  =>  t("A cablecast project contains many cablecast shows.  Usually used as a series."),
+		'fields'  =>  array(
+			'nid'  =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  TRUE,
+				'not null'  =>  TRUE,
+				'default'  =>  0,
+				'description'  =>  t("The projects {node}.nid."),
+				),
+			'vid'  =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  TRUE,
+				'not null'  =>  TRUE,
+				'default'  =>  0,
+				'description'  =>  t("The projects {node_revisions}.vid."),
+				),
+			'cablecast_project_id'  => array(
+				'type'  =>  'int',
+				'unsigned'  => TRUE,
+				'not null'  => TRUE,
+				'default'  => 0,
+				'description'  => t("The cablecast shows {node}.nid."),
+				),
+			'cablecast_project_has_podcast'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Cablecast ScheduleID.'),
+				),
+			'cablecast_project_podcast_name'  => array(
+				'type' => 'int',
+				'unsigned'  =>  TRUE,
+				'default'  => 0,
+				'not null'  =>  TRUE,
+				'description'  => t('Cablecast ScheduleID.'),
+				),
+			'cablecast_project_podcast_description'  =>  array(
+				'type'  =>  'text',
+				'description'  =>  t('Projects podcast description.'),
+				),
+			'cablecast_project_podcast_url'  =>  array(
+				'type'  =>  'text',
+				'description'  =>  t('Projects pocast url.'),
+				),
+			),
+			'primary key'  => array('nid', 'vid'),
+			'unique keys'  => array(
+				'vid'  =>  array('vid')
+				),
+				'indexes'  =>  array(
+					'nid' => array('nid')
+				),
+			);
+			
+			return $schema;
+}
