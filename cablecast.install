@@ -9,6 +9,7 @@ function cablecast_install() {
 	drupal_install_schema('cablecast_show');
 	drupal_install_schema('cablecast_schedule_event');
 	drupal_install_schema('cablecast_project');
+	drupal_install_schema('cablecast_custom_field');
 	
 	$vocab = array(
 		'name' => 'Cablecast Channels',
@@ -25,14 +26,6 @@ function cablecast_install() {
 		);
 		
 		taxonomy_save_vocabulary($vocab);
-		
-		$vid = db_result(
-		    db_query(
-		      "SELECT vid FROM {vocabulary} WHERE name = '%s'",
-		      'Cablecast Channels'
-		    )
-		  );
-		watchdog("Cablecast", $vid);
 }
 
 /**
@@ -41,6 +34,8 @@ function cablecast_install() {
 function cablecast_uninstall() {
 	drupal_uninstall_schema('cablecast_show');
 	drupal_uninstall_schema('cablecast_schedule_event');
+	drupal_uninstall_schema('cablecast_project');
+	drupal_uninstall_schema('cablecast_custom_field');
 }
 
 /**
@@ -124,7 +119,9 @@ function cablecast_show_schema() {
 		
 		return $schema;
 }
-
+/**
+  * Implementation of hook_schema()
+  */
 function cablecast_schedule_event_schema(){
 	$schema['cablecast_schedule_event'] = array(
 		'description'  =>  t("Stores all the details of a Cablecast Schedule Event."),
@@ -204,7 +201,9 @@ function cablecast_schedule_event_schema(){
 			
 			return $schema;
 }
-
+/**
+  * Implementation of hook_schema()
+  */
 function cablecast_project_schema()  {
 	$schema['cablecast_project'] = array(
 		'description'  =>  t("A cablecast project contains many cablecast shows.  Usually used as a series."),
@@ -263,4 +262,34 @@ function cablecast_project_schema()  {
 			);
 			
 			return $schema;
+}
+/**
+  * Implementation of hook_schema()
+  */
+function cablecast_custom_field_schema() {
+	$schema['cablecast_custom_field'] = array(
+		'description'  =>  t("Custom Fields for a Cablecast show"),
+		'fields'  =>  array(
+			'nid'  =>  array(
+				'type'  =>  'int',
+				'unsigned'  =>  TRUE,
+				'not null'  =>  TRUE,
+				'default'  =>  0,
+				'description'  =>  t("Cablecast Show {node}.nid."),
+				),
+			'field_name'  =>  array(
+				'type'  =>  'text',
+				'not null'  =>  false,
+				'description'  =>  t("Cablecast Show Custom Field Name."),
+				),
+			'value'  =>  array(
+				'type'  =>  'text',
+				'not null'  =>  false,
+				'description'  =>  t("Cablecast Show Custom Field Value."),
+				),
+		),
+		'primary key'  =>  array('nid'),
+	);
+	
+	return $schema;
 }
