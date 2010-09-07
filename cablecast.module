@@ -234,9 +234,9 @@ function cablecast_access($op, $node, $account) {
 
 function cablecast_sync_projects($client) {
 	$cablecast_channel_id = variable_get('cablecast_default_channel', '1');
-	$projects = $client->GetProjects(array("ChannelID" => (int)$cablecast_channel_id));
-	//TODO Put Check for Single Project
-	foreach($projects->GetProjectsResult->Project as $project)  {
+	$cablecast_projects = $client->GetProjects(array("ChannelID" => (int)$cablecast_channel_id));
+    $projects = is_array($cablecast_projects->GetProjectsResult->Project) ? $cablecast_projects->GetProjectsResult->Project : array($cablecast_projects->GetProjectsResult->Project);
+    foreach($projects as $project) {
 		$result = db_result(db_query("SELECT COUNT(nid) FROM {cablecast_project} WHERE cablecast_project_id=%d", $project->ProjectID));
 		if($result == 0) {
 			$node = new stdClass();
@@ -273,11 +273,10 @@ function cablecast_sync_channels($client) {
 	$cablecast_channels = $client->GetChannels(NULL);
 	$drupal_channels = taxonomy_get_tree($vid);
 
-	//TODO - Put Check for Single Channel
-	
 	//For each Channel Search the Tree for matching term if it doesn't exist.  Add it
-	foreach($cablecast_channels->GetChannelsResult->Channel as $channel) {
-		$term_exists = false;
+    $channels = is_array($cablecast_channels->GetChannelsResult->Channel) ? $cablecast_channels->GetChannelsResult->Channel : array($cablecast_channels->GetChannelsResult->Channel);
+    foreach($channels as $channel) {
+			$term_exists = false;
 		foreach($drupal_channels as $term) {
 			if($term->name == $channel->Name) {
 				$term_exists = true;
@@ -300,9 +299,9 @@ function cablecast_sync_schedule($client) {
 	while($r = db_fetch_array($drupal_schedule_result))  {
 		$schedule_nids[] = (int)$r["nid"];
 	}
-	//TODO - Put in test for single channel
 	$cablecast_channels = $client->GetChannels(NULL);
-	foreach($cablecast_channels->GetChannelsResult->Channel as $channel) {
+	$channels = is_array($cablecast_channels->GetChannelsResult->Channel) ? $cablecast_channels->GetChannelsResult->Channel : array($cablecast_channels->GetChannelsResult->Channel);
+	foreach($channels as $channel) {
 		$params = array('ChannelID' => $channel->ChannelID,
 					'FromDate' =>  date('Y-m-d\T00:00:00', time()),
 					'ToDate'  =>  date('Y-m-d\T23:59:59', time()+60*60*24*30),
