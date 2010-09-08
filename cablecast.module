@@ -308,6 +308,7 @@ function cablecast_sync_channels($client) {
 function cablecast_sync_schedule($client) {
     try{
         $drupal_schedule_result = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d", time());
+        $schedule_nids = array();
         while($r = db_fetch_array($drupal_schedule_result))  {
             $schedule_nids[] = (int)$r["nid"];
         }
