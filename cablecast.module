@@ -370,8 +370,6 @@ function cablecast_sync_shows($client)  {
       echo "There are some shows to sync?";
       if($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo->ShowID) {
         $show = $cablecast_updated_shows->LastModifiedSearchResult->ShowInfo;
-        dpm($show);
-        return;
         $result = db_result(db_query("SELECT COUNT(nid) FROM {cablecast_show} WHERE showID=%d", $show->ShowID));
         if($result == 0) {
           $node = new stdClass();
