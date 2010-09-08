@@ -66,6 +66,11 @@ function cablecast_show_schema() {
 				'not null'  =>  TRUE,
 				'description'  => t('Cablecast ShowID.'),
 				),
+			'localID'  =>  array(
+				'type'  =>  'text',
+				'not null'  => FALSE,
+				'description'  =>  t("Cablecast Show record's local ID"),
+				),
 			'internalTitle'  => array(
 				'type' => 'text',
 				'not null' =>  FALSE,
@@ -80,10 +85,20 @@ function cablecast_show_schema() {
 				'type'  =>  'int',
 				'description'  =>  t("Show records Event Date."),
 				),
+			'category'  =>  array(
+				'type' => 'text',
+				'not null' =>  FALSE,
+				'description' => t("Cablecast Show's Category text."),
+				),
 			'category_id' =>  array(
 				'type'  =>  'int',
 				'unsigned'  =>  TRUE,
 				'description'  =>  t("Cablecast Show's Category ID used to link taxonomy"),
+				),
+			'producer'  =>  array(
+				'type' => 'text',
+				'not null' =>  FALSE,
+				'description' => t("Cablecast Show's Producer text."),
 				),
 			'producer_id'  =>  array(
 				'type'  =>  'int',
