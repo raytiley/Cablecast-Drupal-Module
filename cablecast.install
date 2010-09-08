@@ -85,12 +85,17 @@ function cablecast_show_schema() {
 				'unsigned'  =>  TRUE,
 				'description'  =>  t("Cablecast Show's Category ID used to link taxonomy"),
 				),
-			'producer_id'  =>  array(
-				'type'  =>  'int',
-				'unsigned'  =>  'true',
-				'description'  =>  t("Cablecast Show's Producer ID used to link to drupal user"),
-				),
-			'rating'  =>  array(
+            'producer_id'  =>  array(
+                'type'  =>  'int',
+                'unsigned'  =>  'true',
+                'description'  =>  t("Cablecast Show's Producer ID used to link to drupal user"),
+                ),
+            'producer_name'  =>  array(
+                'type'  =>  'text',
+                'not null' =>  FALSE,
+                'description'  =>  t("Cablecast Show Producer's Name"),
+                ),
+                'rating'  =>  array(
 				'type'  =>  'text',
 				'not null' => FALSE,
 				'description'  =>  t("A Cablecast Show's Rating"),
