@@ -29,5 +29,13 @@ function cablecast_admin_settings() {
 		'#description'	=>	t("Your Cablecast Location ID - Read Documentation for how to obtain"),
 		'#maxlength'	=>	'3',
 		);
+	$form['cablecast_default_channel']  = array(
+		'#type'  =>  'textfield',
+		'#title'  =>  t('Default Channel ID'),
+		'#default_value'  =>  variable_get('cablecast_default_channel', '1'),
+		'#size'  =>  '3',
+		'#description'  =>  t("A Cablecast Channel ID available at your location."),
+		'#maxLength'  =>  '3',
+		);
 	return system_settings_form($form);
 }
