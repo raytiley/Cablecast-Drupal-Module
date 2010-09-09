@@ -68,6 +68,8 @@ function cablecast_cron() {
     if(cablecast_check_version($client))  {
       watchdog("Cablecast", "Start Syncing Channels");
       cablecast_sync_channels($client);
+      watchdog("Cablecast", "Start Syncing Categories");
+      cablecast_sync_categories($client);
       watchdog("Cablecast", "Start Syncing Projects");
       cablecast_sync_projects($client);
       watchdog("Cablecast", "Start Syncing Shows");
@@ -305,6 +307,44 @@ function cablecast_sync_channels($client) {
     }
 }
 
+function cablecast_sync_categories($client) {
+    try {
+        $vid = db_result(
+        db_query(
+            "SELECT vid FROM {vocabulary} WHERE name = '%s'",
+            'Cablecast Categories'
+            )
+            );
+        // we need a valid channel ID to get cablecast categories, only one is needed since you get the same result for each channel ID!
+        $cablecast_channels = $client->GetChannels();
+        $channels = is_array($cablecast_channels->GetChannelsResult->Channel) ? $cablecast_channels->GetChannelsResult->Channel : array($cablecast_channels->GetChannelsResult->Channel);
+        $channel_id = $channels[0]->ChannelID;
+        $cablecast_categories = $client->GetCategories(array('ChannelID' => $channel_id));
+        $drupal_categories = taxonomy_get_tree($vid);
+        //For each Category Search the Tree for matching term if it doesn't exist.  Add it
+        $categories = is_array($cablecast_categories->GetCategoriesResult->Category) ? $cablecast_categories->GetCategoriesResult->Category : array($cablecast_categories->GetCategoriesResult->Category);
+        foreach($categories as $category) {
+            $term_exists = false;
+            foreach($drupal_categories as $term) {
+                if($term->name == $category->Name && !$term_exists) {
+                    $term_exists = true;
+                }
+            }
+            if(!$term_exists) {
+                $term = array('name' => $category->Name,
+                    'description' => 'Cablecast Category',
+                    'vid'  => $vid,
+                    'weight' => 0,
+                    );
+                taxonomy_save_term(&$term);
+            }
+        }
+    }
+    catch(SoapFault $fault)  {
+      watchdog("Cablecast", "Communicating to server caused the following error: ".$fault->faultstring);
+    }
+}
+
 function cablecast_sync_schedule($client) {
     try{
         $drupal_schedule_result = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d", time());
@@ -406,6 +446,7 @@ function cablecast_sync_shows($client)  {
                 $node->dsk_bug_text = $show->BugText;
                 $node->dsk_crawl_text = $show->CrawlText;
                 $node->dsk_crawl_length = $show->CrawlLengthInSeconds;
+                $node->taxonomy = taxonomy_get_term_by_name($show->Category);
                 $node->comment = 2;
                 node_save($node);
                 cablecast_sync_custom_fields($node, $show->CustomFields);  //sync customr fields afer node_save so nid is available.
@@ -420,15 +461,13 @@ function cablecast_sync_shows($client)  {
 }
 
 function cablecast_sync_custom_fields($node, $custom_fields)  {
-  /*    foreach($custom_fields as $field)  {
-   $custom_field = db_result(
-   db_query(
-   "SELECT nid, field_name, value FROM {cablecast_custom_field} WHERE nid = %d",
-   $node->nid
-   )
-   );
-   }
-   */
+    db_query('DELETE FROM {cablecast_custom_field} WHERE nid = %d',$node->nid);
+    $custom_fields = is_array($custom_fields) ? $custom_fields : array($custom_fields);
+    foreach($custom_fields as $custom_field) {
+        if($custom_field->CustomField->Name && $custom_field->CustomField->Value) {
+            db_query('INSERT INTO {cablecast_custom_field} SET nid=%d, field_name="%s", value="%s"', $node->nid, $custom_field->CustomField->Name, $custom_field->CustomField->Value);
+        }
+    }
 }
 
 function cablecast_check_version($client)  {
