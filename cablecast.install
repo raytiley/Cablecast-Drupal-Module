@@ -11,6 +11,7 @@ function cablecast_install() {
     drupal_install_schema('cablecast_project');
     drupal_install_schema('cablecast_custom_field');
     
+    // set up channels taxonomy
     $vocab = array(
         'name' => 'Cablecast Channels',
         'description' => t('Channels available on the Cablecast Server.  Used for Schedule'),
@@ -23,6 +24,23 @@ function cablecast_install() {
         'module' => 'cablecast',
         'weight' => 0,
         'nodes' => array('cablecast_schedule_event' => 1),
+        );
+        
+        taxonomy_save_vocabulary($vocab);
+        
+    // set up categories taxonomy
+    $vocab = array(
+        'name' => 'Cablecast Categories',
+        'description' => t('Categories used to classify shows on the Cablecast Server.'),
+        'help' => 0,
+        'relations' => 0,
+        'hierarchy' =>0,
+        'multiple' => 0,
+        'required' => 1,
+        'tags'  => 0,
+        'module' => 'cablecast',
+        'weight' => 0,
+        'nodes' => array('cablecast_show' => 1),
         );
         
         taxonomy_save_vocabulary($vocab);
