@@ -103,6 +103,8 @@ function cablecast_insert($node) {
       db_query("INSERT INTO {cablecast_project} (nid, vid, cablecast_project_id, cablecast_project_has_podcast, cablecast_project_podcast_name, cablecast_project_podcast_description, cablecast_project_podcast_url) VALUES
 			(%d, %d, %d, %d, '%s', '%s', '%s')",
       $node->nid, $node->vid, $node->cablecast_project_id, $node->cablecast_project_has_podcast, $node->cablecast_project_podcast_name, $node->cablecast_project_podcast_description, $node->cablecast_project_podcast_url);
+	  var_dump($node);
+	  exit();
       break;
   }
 }
@@ -144,7 +146,7 @@ function cablecast_load($node) {
       break;
     case "cablecast_project":
       $result = db_fetch_object(db_query('SELECT cablecast_project_id, cablecast_project_has_podcast, cablecast_project_podcast_name, cablecast_project_podcast_description, cablecast_project_podcast_url FROM {cablecast_project} WHERE vid=%d', $node->vid));
-      break;
+
   }
   return $result;
 }
@@ -156,15 +158,26 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
   //TODO - Modify for other cablecast content types
   if(!$teaser) {
     $node = node_prepare($node, $teaser);
-
-    $node->content['internalTitle'] = array(
-			'#value' => theme('cablecast_show_internalTitle', $node),
-			'#weight' => 2,
-    );
-    $node->content['trt'] = array(
-			'#value'  =>  theme('cablecast_show_trt', $node),
-			'#weight'  => 2,
-    );
+	switch($node->type) {
+		case 'cablecast_show':
+    		$node->content['internalTitle'] = array(
+					'#value' => theme('cablecast_show_internalTitle', $node),
+					'#weight' => 2,
+		    );
+		    $node->content['trt'] = array(
+					'#value'  =>  theme('cablecast_show_trt', $node),
+					'#weight'  => 2,
+		    );
+			break;
+		case 'cablecast_schedule_event':
+			break;
+		case 'cablecast_project':
+			$node->content['shows'] = array(
+				'#value'  =>  theme('cablecast_project_shows', $node),
+				'#weight'  => 2,
+			);
+			break;
+	}
   }
   if($teaser) {
     $node = node_prepare($node, $teaser);
@@ -197,6 +210,9 @@ function cablecast_theme() {
 		'cablecast_show_trt'  =>  array(
 			'arguments'  =>  array('node'),
   ),
+		'cablecast_project_shows'  => array(
+			'arguments'  =>  array('node'),
+  ),
   );
 }
 
@@ -210,6 +226,17 @@ function theme_cablecast_show_trt($node)  {
   $output = '<div class="cablecast-show-trt">'.
   check_markup($node->trt).'</div><br />';
   return $output;
+}
+
+function theme_cablecast_project_shows($node)  {
+	$output = "<div class=\"cablecast-project-shows\">\n".
+			  "<table class=\"cablecast-project-shows-list\">\n".
+			  "<tr><th>Show Title</th><th>Show Description</th><th>Link</th></tr>\n";
+	foreach($node->cablecast_shows as $show)  {
+		$output = $output."<tr><td>".check_markup($show->title)."</td><td>".check_markup($show->body)."</td><td><a href=\"node/".$show->nid."\">View More</a></td></tr>\n";
+	}
+	$output = $output."</table>";
+	return $output;
 }
 
 function cablecast_views_api() {
@@ -256,6 +283,7 @@ function cablecast_sync_projects($client) {
 		}
 		$node->title = $project->Name;
 		$node->body = $project->Description;
+		$node->cablecast_project_id = $project->ProjectID;
 		$node->cablecast_project_has_podcast = $project->HasPodcast;
 		$node->cablecast_project_podcast_name = $project->PodcastName;
 		$node->cablecast_project_podcast_description = $project->PodcastDescription;

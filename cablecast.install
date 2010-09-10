@@ -252,11 +252,8 @@ function cablecast_project_schema()  {
 				'description'  => t('Cablecast ScheduleID.'),
 				),
 			'cablecast_project_podcast_name'  => array(
-				'type' => 'int',
-				'unsigned'  =>  TRUE,
-				'default'  => 0,
-				'not null'  =>  TRUE,
-				'description'  => t('Cablecast ScheduleID.'),
+				'type' => 'text',
+				'description'  => t('Projects podcast name.'),
 				),
 			'cablecast_project_podcast_description'  =>  array(
 				'type'  =>  'text',
