@@ -63,7 +63,6 @@ function cablecast_cron() {
   if($cablecast_server_uri = variable_get('cablecast_server_uri', 0)) {
     $cablecast_server_uri = $cablecast_server_uri."/CablecastWS/CablecastWS.asmx?WSDL";
     $client = new SoapClient($cablecast_server_uri);
-
     //Check Cablecast Webservice Version, Should also catch bad connections.
     if(cablecast_check_version($client))  {
       watchdog("Cablecast", "Start Syncing Channels");
@@ -74,16 +73,14 @@ function cablecast_cron() {
       cablecast_sync_projects($client);
       watchdog("Cablecast", "Start Syncing Shows");
       cablecast_sync_shows($client);
-      watchdog("Cablecast", "Stop Syncing Shows");
       watchdog("Cablecast", "Start Syncing Schedule");
       cablecast_sync_schedule($client);
       watchdog("Cablecast", "End Cron");
-    }
-    else  {
-        watchdog("Cablecast", "Cablecast detected an Cablecast WebService version incompatiable with this module.");
-    }
+	}
+	else  {
+		watchdog("Cablecast", "Cablecast detected an Cablecast WebService version incompatiable with this module.");
+	}
   }
-
 }
 
 /**
@@ -92,9 +89,9 @@ function cablecast_cron() {
 function cablecast_insert($node) {
   switch($node->type) {
     case 'cablecast_show':
-      db_query("INSERT INTO {cablecast_show} (nid, vid, showID, internalTitle, trt, event_date, category_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length) VALUES
-            (%d, %d, %d, '%s', %d, '%s', %d, %d, '%s', '%s', '%s', '%s', %d)",
-      $node->nid, $node->vid, $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->producer_id, $node->producer_name, $node->rating, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length);
+      db_query("INSERT INTO {cablecast_show} (nid, vid, showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length) VALUES
+            (%d, %d, %d, '%s', %d, '%s', %d, %d, %d, '%s', '%s', '%s', '%s', %d)",
+      $node->nid, $node->vid, $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->project_id, $node->producer_id, $node->producer_name, $node->rating, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length);
       break;
     case 'cablecast_schedule_event':
       db_query("INSERT INTO {cablecast_schedule_event} (nid, vid, scheduleID, showID, cablecast_show_nid, start_time, end_time, run_bump, cg_exempt) VALUES
@@ -105,7 +102,6 @@ function cablecast_insert($node) {
       db_query("INSERT INTO {cablecast_project} (nid, vid, cablecast_project_id, cablecast_project_has_podcast, cablecast_project_podcast_name, cablecast_project_podcast_description, cablecast_project_podcast_url) VALUES
             (%d, %d, %d, %d, '%s', '%s', '%s')",
       $node->nid, $node->vid, $node->cablecast_project_id, $node->cablecast_project_has_podcast, $node->cablecast_project_podcast_name, $node->cablecast_project_podcast_description, $node->cablecast_project_podcast_url);
-      break;
   }
 }
 /**
@@ -118,8 +114,8 @@ function cablecast_update($node) {
   else {
     switch($node->type) {
       case 'cablecast_show':
-        db_query("UPDATE {cablecast_show} SET showID=%d, internalTitle='%s', trt=%d, event_date=%d, category_id=%d, producer_id=%d, producer_name='%s', rating='%s', dsk_bug_text='%s', dsk_crawl_text='%s', dsk_crawl_length=%d WHERE vid=%d",
-        $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->producer_id, $node->producer_name, $node->rating, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length, $node->vid);
+        db_query("UPDATE {cablecast_show} SET showID=%d, internalTitle='%s', trt=%d, event_date=%d, category_id=%d, project_id=%d, producer_id=%d, producer_name='%s', rating='%s', dsk_bug_text='%s', dsk_crawl_text='%s', dsk_crawl_length=%d WHERE vid=%d",
+        $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->project_id, $node->producer_id, $node->producer_name, $node->rating, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length, $node->vid);
         break;
       case 'cablecast_schedule_event':
         db_query("UPDATE {cablecast_schedule_event} SET scheduleID=%d, showID=%d, cablecast_show_nid=%d, start_time=%d, end_time=%d, run_bump=%d, cg_exempt=%d WHERE vid=%d",
@@ -139,14 +135,24 @@ function cablecast_update($node) {
 function cablecast_load($node) {
   switch ($node->type) {
     case "cablecast_show":
-      $result = db_fetch_object(db_query('SELECT showID, internalTitle, trt, event_date, category_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length FROM {cablecast_show} WHERE vid = %d', $node->vid));
+      $result = db_fetch_object(db_query('SELECT showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length FROM {cablecast_show} WHERE vid = %d', $node->vid));
       break;
     case "cablecast_schedule_event":
       $result = db_fetch_object(db_query('SELECT scheduleID, showID, cablecast_show_nid, start_time, end_time, run_bump, cg_exempt FROM {cablecast_schedule_event} WHERE vid = %d', $node->vid));
       break;
     case "cablecast_project":
       $result = db_fetch_object(db_query('SELECT cablecast_project_id, cablecast_project_has_podcast, cablecast_project_podcast_name, cablecast_project_podcast_description, cablecast_project_podcast_url FROM {cablecast_project} WHERE vid=%d', $node->vid));
-      break;
+	  $cablecast_shows = array();
+	  $show_nids = db_query("SELECT nid FROM {cablecast_show} WHERE project_id =  $result->cablecast_project_id ORDER BY event_date DESC");
+	  while($r = db_fetch_array($show_nids))  {
+            $show_node = node_load($r['nid']);
+			$show = new stdClass();
+			$show->title = $show_node->title;
+			$show->body = $show_node->body;
+			$show->nid = $show_node->nid;
+			$cablecast_shows[] = $show;
+        }
+	$result->cablecast_shows = $cablecast_shows;
   }
   return $result;
 }
@@ -158,15 +164,27 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
   //TODO - Modify for other cablecast content types
   if(!$teaser) {
     $node = node_prepare($node, $teaser);
+	switch($node->type) {
+		case 'cablecast_show':
+    		$node->content['internalTitle'] = array(
+					'#value' => theme('cablecast_show_internalTitle', $node),
+					'#weight' => 2,
+		    );
+		    $node->content['trt'] = array(
+					'#value'  =>  theme('cablecast_show_trt', $node),
+					'#weight'  => 2,
+		    );
+			break;
+		case 'cablecast_schedule_event':
+			break;
+		case 'cablecast_project':
+			$node->content['shows'] = array(
+				'#value'  =>  theme('cablecast_project_shows', $node),
+				'#weight'  => 2,
+			);
+			break;
+	}
 
-    $node->content['internalTitle'] = array(
-            '#value' => theme('cablecast_show_internalTitle', $node),
-            '#weight' => 2,
-    );
-    $node->content['trt'] = array(
-            '#value'  =>  theme('cablecast_show_trt', $node),
-            '#weight'  => 2,
-    );
   }
   if($teaser) {
     $node = node_prepare($node, $teaser);
@@ -199,6 +217,9 @@ function cablecast_theme() {
         'cablecast_show_trt'  =>  array(
             'arguments'  =>  array('node'),
   ),
+		'cablecast_project_shows'  => array(
+			'arguments'  =>  array('node'),
+  ),
   );
 }
 
@@ -212,6 +233,17 @@ function theme_cablecast_show_trt($node)  {
   $output = '<div class="cablecast-show-trt">'.
   check_markup($node->trt).'</div><br />';
   return $output;
+}
+
+function theme_cablecast_project_shows($node)  {
+	$output = "<div class=\"cablecast-project-shows\">\n".
+			  "<table class=\"cablecast-project-shows-list\">\n".
+			  "<tr><th>Show Title</th><th>Show Description</th><th>Link</th></tr>\n";
+	foreach($node->cablecast_shows as $show)  {
+		$output = $output."<tr><td>".check_markup($show->title)."</td><td>".check_markup($show->body)."</td><td><a href=\"/node/".$show->nid."\">View More</a></td></tr>\n";
+	}
+	$output = $output."</table></div>\n";
+	return $output;
 }
 
 function cablecast_views_api() {
@@ -252,12 +284,13 @@ function cablecast_sync_projects($client) {
         }
         // Load node for projects that do exist
         else {
-          $project_nid = db_result(db_query("SELECT nid FROM {cablecast_project} WHERE cablecast_project=%d", $project->ProjectID));
+          $project_nid = db_result(db_query("SELECT nid FROM {cablecast_project} WHERE cablecast_project_id=%d", $project->ProjectID));
           $node = node_load($project_nid);
           watchdog("Cablecast", "Project is being updated");
         }
         $node->title = $project->Name;
         $node->body = $project->Description;
+		$node->cablecast_project_id = $project->ProjectID;
         $node->cablecast_project_has_podcast = $project->HasPodcast;
         $node->cablecast_project_podcast_name = $project->PodcastName;
         $node->cablecast_project_podcast_description = $project->PodcastDescription;
@@ -307,6 +340,7 @@ function cablecast_sync_channels($client) {
     }
 }
 
+
 function cablecast_sync_categories($client) {
     try {
         $vid = db_result(
@@ -347,7 +381,7 @@ function cablecast_sync_categories($client) {
 
 function cablecast_sync_schedule($client) {
     try{
-        $drupal_schedule_result = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d", time());
+        $drupal_schedule_result = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d", _cablecast_site_time());
         $schedule_nids = array();
         while($r = db_fetch_array($drupal_schedule_result))  {
             $schedule_nids[] = (int)$r["nid"];
@@ -356,8 +390,8 @@ function cablecast_sync_schedule($client) {
         $channels = is_array($cablecast_channels->GetChannelsResult->Channel) ? $cablecast_channels->GetChannelsResult->Channel : array($cablecast_channels->GetChannelsResult->Channel);
         foreach($channels as $channel) {
             $params = array('ChannelID' => $channel->ChannelID,
-                'FromDate' =>  date('Y-m-d\T00:00:00', time()),
-                'ToDate'  =>  date('Y-m-d\T23:59:59', time()+60*60*24*30),
+                'FromDate' =>  date('Y-m-d\T00:00:00', _cablecast_site_time()),
+                'ToDate'  =>  date('Y-m-d\T23:59:59', _cablecast_site_time()+60*60*24*30),
                 'restrictToShowID'  =>  0,
                 );
             $schedule_events = $client->GetCGExemptScheduleInformation($params);
@@ -440,6 +474,7 @@ function cablecast_sync_shows($client)  {
                 $node->trt = $show->TotalSeconds;
                 $node->event_date = strtotime($show->EventDate);
                 $node->category_id = $show->CategoryID;
+				$node->project_id = $show->ProjectID;
                 $node->producer_id = $show->ProducerID;
                 $node->producer_name = $show->Producer;
                 $node->rating = "n/a";  //Cablecast doesn't export this yet
@@ -461,6 +496,7 @@ function cablecast_sync_shows($client)  {
 }
 
 function cablecast_sync_custom_fields($node, $custom_fields)  {
+
     db_query('DELETE FROM {cablecast_custom_field} WHERE nid = %d',$node->nid);
     $custom_fields = is_array($custom_fields) ? $custom_fields : array($custom_fields);
     foreach($custom_fields as $custom_field) {
@@ -515,3 +551,9 @@ function _cablecast_get_taxonomy_term_by_name($name, $vocab_name = NULL) {
 //   dpm($debug);
    return $result;
  }
+
+function _cablecast_site_time() {
+    $offset = variable_get('date_default_timezone', date('Z')) - date('Z');
+    return time()+$offset;
+}
+ 
