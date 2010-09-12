@@ -66,20 +66,36 @@ function cablecast_menu() {
 
 function cablecast_schedule_page() {
 	if(arg(2))  {
-		$return = "Would Look Up Taxonomy Term: ".arg(2);
+		$channel_tax = _cablecast_get_taxonomy_term_by_name(str_replace('_', ' ',arg(2)), 'Cablecast Channels');
+		//Get Date directly from query string - Default to today
+		if(isset($_GET['date']))  {
+			$date = strtotime($_GET['date']);
+		}
+		else {
+			$date = time();
+		}
+		//Table Stuff
+		$schedule_table_header = array(t("Program Name"), t("Time"));
+		$schedule_table_data = array();
+		//There is probably a cleaner way to do this with some awesome SQL Join or something... but for now this is easier
+		$schedule_nids = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time >= ".strtotime(date("Y-m-d\T00:00:00",$date))." AND end_time <= ".strtotime(date("Y-m-d\T23:59:59",$date))." ORDER BY start_time");
+		while($r = db_fetch_array($schedule_nids))  {
+			$node = node_load($r['nid']);
+			//Loop through all node's taxonomy.  If it is tagged with this channel, include it in result.  Ignore all else.
+			foreach($node->taxonomy as $tax) {
+				if($tax->tid == $channel_tax[0]->tid) {
+					$schedule_table_data[] = array(t($node->title), date('g:i a',$node->start_time));
+				}
+			
+			}
+		
+		}
+		return theme_table($schedule_table_header, $schedule_table_data);
 	}
-	else  {
-		$return = "Would Default to first Cablecast Channel";
+	else {
+		//ToDo - Return a list of links to Available channels
+		return "You didn't specify a channel";
 	}
-	
-	if(arg(3))  {
-		$date = strtotime(arg(3));
-	}
-	else  {
-		$date = time();
-	}
-	return $return." for ".date('r', $date);
-	
 }
 
 /**
