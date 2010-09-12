@@ -53,7 +53,33 @@ function cablecast_menu() {
         'type' => MENU_NORMAL_ITEM,
         'file' => 'cablecast.admin.inc',
   );
+
+  $items['cablecast/schedule'] = array(
+		'title'  =>  'TV Schedule',
+		'description'  =>  'Displays a TV Schedule for given cablecast_channel taxonomy term',
+		'page callback'  =>  'cablecast_schedule_page',
+		'access arguments'  =>  array('access content'),
+		'type'  =>  MENU_NORMAL_ITEM,
+		);
   return $items;
+}
+
+function cablecast_schedule_page() {
+	if(arg(2))  {
+		$return = "Would Look Up Taxonomy Term: ".arg(2);
+	}
+	else  {
+		$return = "Would Default to first Cablecast Channel";
+	}
+	
+	if(arg(3))  {
+		$date = strtotime(arg(3));
+	}
+	else  {
+		$date = time();
+	}
+	return $return." for ".date('r', $date);
+	
 }
 
 /**
