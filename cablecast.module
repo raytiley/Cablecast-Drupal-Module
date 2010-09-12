@@ -407,7 +407,7 @@ function cablecast_sync_categories($client) {
 
 function cablecast_sync_schedule($client) {
     try{
-        $drupal_schedule_result = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d", time());
+        $drupal_schedule_result = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d", _cablecast_site_time());
         $schedule_nids = array();
         while($r = db_fetch_array($drupal_schedule_result))  {
             $schedule_nids[] = (int)$r["nid"];
@@ -416,8 +416,8 @@ function cablecast_sync_schedule($client) {
         $channels = is_array($cablecast_channels->GetChannelsResult->Channel) ? $cablecast_channels->GetChannelsResult->Channel : array($cablecast_channels->GetChannelsResult->Channel);
         foreach($channels as $channel) {
             $params = array('ChannelID' => $channel->ChannelID,
-                'FromDate' =>  date('Y-m-d\T00:00:00', time()),
-                'ToDate'  =>  date('Y-m-d\T23:59:59', time()+60*60*24*30),
+                'FromDate' =>  date('Y-m-d\T00:00:00', _cablecast_site_time()),
+                'ToDate'  =>  date('Y-m-d\T23:59:59', _cablecast_site_time()+60*60*24*30),
                 'restrictToShowID'  =>  0,
                 );
             $schedule_events = $client->GetCGExemptScheduleInformation($params);
@@ -451,7 +451,7 @@ function cablecast_sync_schedule($client) {
                         $node->run_bump = $event->RunBump;
                         $node->cg_exempt = $event->CGExempt;
                         $node->status = $event->CGExempt ? 0 : 1;
-                        $node->taxonomy = taxonomy_get_term_by_name($channel->Name);
+                        $node->taxonomy = _cablecast_get_taxonomy_term_by_name($channel->Name, 'Cablecast Channels');
                         $node->cablecast_show_nid = $show_nid;
                         node_save($node);
                     }
@@ -507,7 +507,7 @@ function cablecast_sync_shows($client)  {
                 $node->dsk_bug_text = $show->BugText;
                 $node->dsk_crawl_text = $show->CrawlText;
                 $node->dsk_crawl_length = $show->CrawlLengthInSeconds;
-                $node->taxonomy = taxonomy_get_term_by_name($show->Category);
+                $node->taxonomy = _cablecast_get_taxonomy_term_by_name($show->Category, 'Cablecast Categories');
                 $node->comment = 2;
                 node_save($node);
                 cablecast_sync_custom_fields($node, $show->CustomFields);  //sync customr fields afer node_save so nid is available.
@@ -543,3 +543,43 @@ function cablecast_check_version($client)  {
     }
     return $version >= 300;
 }
+
+
+// adapted from http://drupal.org/files/issues/drupal-7-dev-336697-8.patch
+function _cablecast_get_taxonomy_term_by_name($name, $vocab_name = NULL) {
+    if($vocab_name) {
+        $vid = db_result(
+        db_query(
+            "SELECT vid FROM {vocabulary} WHERE name = '%s'",
+            trim($vocab_name)
+            )
+            );
+    }
+    $sql = NULL;
+  $args[] = $name;
+  // multiple vocabularies to select from?
+  if (is_array($vid)) {
+      $placeholders = array_fill(0, count($vid), '?');
+    $sql = ' AND t.vid IN (' . implode(', ', $placeholders) . ') ';
+    $args = array_merge($args, $vid);
+  }
+  // single vocabulary to select from?
+  if (is_numeric($vid)) {
+    $sql = ' AND t.vid = %d';
+    $args[] = $vid;
+  }
+  $db_result = db_query("SELECT t.tid, t.* FROM {term_data} t WHERE LOWER(t.name) = LOWER('%s')" . $sql, $args);
+   $result = array();
+   while ($term = db_fetch_object($db_result)) {
+     $result[] = $term;
+   }
+//   $debug = array($vocab_name, $vid, $args, $result);
+//   dpm($debug);
+   return $result;
+ }
+
+function _cablecast_site_time() {
+    $offset = variable_get('date_default_timezone', date('Z')) - date('Z');
+    return time()+$offset;
+}
+ 
