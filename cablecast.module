@@ -187,8 +187,6 @@ function cablecast_load($node) {
       else {
           $result->project_name = variable_get('cablecast_default_project_name', 'misc');
       }
-      var_dump($result);
-      exit;
       break;
     case "cablecast_schedule_event":
       $result = db_fetch_object(db_query('SELECT scheduleID, showID, cablecast_show_nid, start_time, end_time, run_bump, cg_exempt FROM {cablecast_schedule_event} WHERE vid = %d', $node->vid));
