@@ -178,6 +178,17 @@ function cablecast_load($node) {
   switch ($node->type) {
     case "cablecast_show":
       $result = db_fetch_object(db_query('SELECT showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length FROM {cablecast_show} WHERE vid = %d', $node->vid));
+      //Add Project Name to Show Node
+      $project_nid = db_result(db_query("SELECT nid FROM {cablecast_project} WHERE cablecast_project_id=%d", $result->project_id));
+      if($project_nid)  {
+          $project_name = db_result(db_query("SELECT title FROM {node} WHERE nid=%d", $project_nid));
+          $result->project_name = $project_name;
+      }
+      else {
+          $result->project_name = variable_get('cablecast_default_project_name', 'misc');
+      }
+      var_dump($result);
+      exit;
       break;
     case "cablecast_schedule_event":
       $result = db_fetch_object(db_query('SELECT scheduleID, showID, cablecast_show_nid, start_time, end_time, run_bump, cg_exempt FROM {cablecast_schedule_event} WHERE vid = %d', $node->vid));
