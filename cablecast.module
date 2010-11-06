@@ -240,7 +240,7 @@ function theme_cablecast_project_shows($node)  {
 			  "<table class=\"cablecast-project-shows-list\">\n".
 			  "<tr><th>Show Title</th><th>Show Description</th><th>Link</th></tr>\n";
 	foreach($node->cablecast_shows as $show)  {
-		$output = $output."<tr><td>".check_markup($show->title)."</td><td>".check_markup($show->body)."</td><td><a href=\"/node/".$show->nid."\">View More</a></td></tr>\n";
+		$output = $output."<tr><td>".check_markup($show->title)."</td><td>".check_markup($show->body)."</td><td>".l('View More', 'node/'.$show->nid)."</td></tr>\n";
 	}
 	$output = $output."</table></div>\n";
 	return $output;
