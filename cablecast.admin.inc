@@ -21,7 +21,7 @@ function cablecast_admin_settings() {
 		'#description'	=>	t("Public address for your Cablecast Server"),
 		'#maxlength'	=>	'65',
 		);
-	$form['cablecast_default_location'] = array(
+	$form['cablecast_default_location_id'] = array(
 		'#type'	=>	'textfield',
 		'#title'	=>	t('Location ID'),
 		'#default_value'	=>	variable_get('cablecast_default_location_id', '22'),
