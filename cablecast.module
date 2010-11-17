@@ -105,6 +105,13 @@ function cablecast_cron() {
   if($cablecast_server_uri = variable_get('cablecast_server_uri', 0)) {
     $cablecast_server_uri = $cablecast_server_uri."/CablecastWS/CablecastWS.asmx?WSDL";
     $client = new SoapClient($cablecast_server_uri);
+    
+     //Set user to admin so that schedule_events can be delted
+      global $user;
+      $original_user = $user;
+      session_save_session(FALSE);
+      $user = user_load(array('uid' => 1));
+    
     //Check Cablecast Webservice Version, Should also catch bad connections.
     if(cablecast_check_version($client))  {
       watchdog("Cablecast", "Start Syncing Channels");
@@ -122,6 +129,10 @@ function cablecast_cron() {
 	else  {
 		watchdog("Cablecast", "Cablecast detected an Cablecast WebService version incompatiable with this module.");
 	}
+	
+	$user = $original_user;
+  session_save_session(TRUE);
+	
   }
 }
 
