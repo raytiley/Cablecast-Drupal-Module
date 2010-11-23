@@ -300,6 +300,23 @@ function cablecast_views_data() {
 	    ),
 	  );
 	
+  $data['cablecast_show']['streaming_file_url'] = array(
+	    'title' => t('Streaming File URL'),
+	    'help' => t('Cablecast Shows Streaming File URL'),
+	    'field' => array(
+	      'handler' => 'views_handler_field',
+	      'click sortable' => TRUE,
+	    ),
+	    'sort' => array(
+	      'handler' => 'views_handler_sort',
+	    ),
+	    'filter' => array(
+	      'handler' => 'views_handler_filter_string',
+	    ),
+	    'argument' => array(
+	      'handler' => 'views_handler_argument_string',
+	    ),
+	  );
 	$data['cablecast_show']['dsk_crawl_text'] = array(
 	    'title' => t('Crawl Text'),
 	    'help' => t('Shows Crawl Text'),

@@ -127,6 +127,10 @@ function cablecast_show_schema() {
                 'type'  =>  'text',
                 'description'  =>  t("Cablecast Show's bug text."),
                 ),
+            'streaming_file_url'  =>  array(
+                'type'  =>  'text',
+                'description'  =>  t("Cablecast Show's Streaming File URL."),
+                ),
             'dsk_crawl_text'  =>  array(
                 'type'  =>  'text',
                 'description'  => t("Cablecast Show's Crawl Text."),

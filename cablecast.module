@@ -142,9 +142,9 @@ function cablecast_cron() {
 function cablecast_insert($node) {
   switch($node->type) {
     case 'cablecast_show':
-      db_query("INSERT INTO {cablecast_show} (nid, vid, showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length) VALUES
-            (%d, %d, %d, '%s', %d, '%s', %d, %d, %d, '%s', '%s', '%s', '%s', %d)",
-      $node->nid, $node->vid, $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->project_id, $node->producer_id, $node->producer_name, $node->rating, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length);
+      db_query("INSERT INTO {cablecast_show} (nid, vid, showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, streaming_file_url, dsk_bug_text, dsk_crawl_text, dsk_crawl_length) VALUES
+            (%d, %d, %d, '%s', %d, '%s', %d, %d, %d, '%s', '%s', '%s', '%s', '%s', %d)",
+      $node->nid, $node->vid, $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->project_id, $node->producer_id, $node->producer_name, $node->rating, $node->streaming_file_url, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length);
       break;
     case 'cablecast_schedule_event':
       db_query("INSERT INTO {cablecast_schedule_event} (nid, vid, scheduleID, showID, cablecast_show_nid, start_time, end_time, run_bump, cg_exempt) VALUES
@@ -167,8 +167,8 @@ function cablecast_update($node) {
   else {
     switch($node->type) {
       case 'cablecast_show':
-        db_query("UPDATE {cablecast_show} SET showID=%d, internalTitle='%s', trt=%d, event_date=%d, category_id=%d, project_id=%d, producer_id=%d, producer_name='%s', rating='%s', dsk_bug_text='%s', dsk_crawl_text='%s', dsk_crawl_length=%d WHERE vid=%d",
-        $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->project_id, $node->producer_id, $node->producer_name, $node->rating, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length, $node->vid);
+        db_query("UPDATE {cablecast_show} SET showID=%d, internalTitle='%s', trt=%d, event_date=%d, category_id=%d, project_id=%d, producer_id=%d, producer_name='%s', rating='%s', streaming_file_url='%s', dsk_bug_text='%s', dsk_crawl_text='%s', dsk_crawl_length=%d WHERE vid=%d",
+        $node->showID, $node->internalTitle, $node->trt, $node->event_date, $node->category_id, $node->project_id, $node->producer_id, $node->producer_name, $node->rating, $node->streaming_file_url, $node->dsk_bug_text, $node->dsk_crawl_text, $node->dsk_crawl_length, $node->vid);
         break;
       case 'cablecast_schedule_event':
         db_query("UPDATE {cablecast_schedule_event} SET scheduleID=%d, showID=%d, cablecast_show_nid=%d, start_time=%d, end_time=%d, run_bump=%d, cg_exempt=%d WHERE vid=%d",
@@ -188,7 +188,7 @@ function cablecast_update($node) {
 function cablecast_load($node) {
   switch ($node->type) {
     case "cablecast_show":
-      $result = db_fetch_object(db_query('SELECT showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, dsk_bug_text, dsk_crawl_text, dsk_crawl_length FROM {cablecast_show} WHERE vid = %d', $node->vid));
+      $result = db_fetch_object(db_query('SELECT showID, internalTitle, trt, event_date, category_id, project_id, producer_id, producer_name, rating, streaming_file_url, dsk_bug_text, dsk_crawl_text, dsk_crawl_length FROM {cablecast_show} WHERE vid = %d', $node->vid));
       //Add Project Name to Show Node
       $project_nid = db_result(db_query("SELECT nid FROM {cablecast_project} WHERE cablecast_project_id=%d", $result->project_id));
       if($project_nid)  {
@@ -236,6 +236,10 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
 					'#value'  =>  theme('cablecast_show_trt', $node),
 					'#weight'  => 2,
 		    );
+		    $node->content['streaming_file_url'] = array(
+		      '#value' => theme('cablecast_show_streaming_file_url', $node),
+		      '#weight' => 3,
+		    );
 			break;
 		case 'cablecast_schedule_event':
 			break;
@@ -279,8 +283,11 @@ function cablecast_theme() {
         'cablecast_show_trt'  =>  array(
             'arguments'  =>  array('node'),
   ),
-		'cablecast_project_shows'  => array(
-			'arguments'  =>  array('node'),
+        'cablecast_streaming_file_url' => array(
+          'arguments' => array('node'),
+  ),
+		    'cablecast_project_shows'  => array(
+			      'arguments'  =>  array('node'),
   ),
   );
 }
@@ -294,6 +301,18 @@ function theme_cablecast_show_internalTitle($node) {
 function theme_cablecast_show_trt($node)  {
   $output = '<div class="cablecast-show-trt">'.
   check_markup($node->trt).'</div><br />';
+  return $output;
+}
+
+function theme_cablecast_streaming_file_url($node) {
+  if($node->streaming_file_url != "")
+  {
+  $output = "<a href=\"$node->streaming_file_url\">Watch Now</a>";
+  }
+  else
+  {
+    $output = "";
+  }
   return $output;
 }
 
@@ -536,10 +555,11 @@ function cablecast_sync_shows($client)  {
                 $node->trt = $show->TotalSeconds;
                 $node->event_date = strtotime($show->EventDate);
                 $node->category_id = $show->CategoryID;
-				$node->project_id = $show->ProjectID;
+				        $node->project_id = $show->ProjectID;
                 $node->producer_id = $show->ProducerID;
                 $node->producer_name = $show->Producer;
                 $node->rating = "n/a";  //Cablecast doesn't export this yet
+                $node->streaming_file_url = $show->StreamingFileURL;
                 $node->dsk_bug_text = $show->BugText;
                 $node->dsk_crawl_text = $show->CrawlText;
                 $node->dsk_crawl_length = $show->CrawlLengthInSeconds;
