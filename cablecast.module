@@ -283,7 +283,7 @@ function cablecast_theme() {
         'cablecast_show_trt'  =>  array(
             'arguments'  =>  array('node'),
   ),
-        'cablecast_streaming_file_url' => array(
+        'cablecast_show_streaming_file_url' => array(
           'arguments' => array('node'),
   ),
 		    'cablecast_project_shows'  => array(
@@ -304,7 +304,7 @@ function theme_cablecast_show_trt($node)  {
   return $output;
 }
 
-function theme_cablecast_streaming_file_url($node) {
+function theme_cablecast_show_streaming_file_url($node) {
   if($node->streaming_file_url != "")
   {
   $output = "<a href=\"$node->streaming_file_url\">Watch Now</a>";
