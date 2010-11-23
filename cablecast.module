@@ -506,7 +506,7 @@ function cablecast_sync_schedule($client) {
 
 function cablecast_sync_shows($client)  {
     try {
-        $cablecast_location_id = variable_get('cablecast_default_location', '22');
+        $cablecast_location_id = variable_get('cablecast_default_location_id', '22');
         $cablecast_last_sync = variable_get('cablecast_last_sync', '1900-01-01T12:00:00');
         $params = array("LocationID" => $cablecast_location_id, "SearchDate" => $cablecast_last_sync, "DateComparator" => ">");
         $cablecast_updated_shows = $client->LastModifiedSearch($params);
