@@ -104,7 +104,7 @@ function cablecast_schedule_page() {
 function cablecast_cron() {
   if($cablecast_server_uri = variable_get('cablecast_server_uri', 0)) {
     $cablecast_server_uri = $cablecast_server_uri."/CablecastWS/CablecastWS.asmx?WSDL";
-    $client = new SoapClient($cablecast_server_uri);
+    $client = new SoapClient($cablecast_server_uri, array('cache_wsdl' => 0));
     
      //Set user to admin so that schedule_events can be delted
       global $user;
