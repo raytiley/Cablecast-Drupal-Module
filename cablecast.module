@@ -78,13 +78,13 @@ function cablecast_schedule_page() {
 		$schedule_table_header = array(t("Program Name"), t("Time"));
 		$schedule_table_data = array();
 		//There is probably a cleaner way to do this with some awesome SQL Join or something... but for now this is easier
-		$schedule_nids = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time >= ".strtotime(date("Y-m-d\T00:00:00",$date))." AND end_time <= ".strtotime(date("Y-m-d\T23:59:59",$date))." ORDER BY start_time");
+		$schedule_nids = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time >= ".strtotime(date("Y-m-d\T00:00:00",$date))." AND end_time <= ".strtotime(date("Y-m-d\T23:59:59",$date))." AND cg_exempt=0 ORDER BY start_time");
 		while($r = db_fetch_array($schedule_nids))  {
 			$node = node_load($r['nid']);
 			//Loop through all node's taxonomy.  If it is tagged with this channel, include it in result.  Ignore all else.
 			foreach($node->taxonomy as $tax) {
 				if($tax->tid == $channel_tax[0]->tid) {
-					$schedule_table_data[] = array(t($node->title), date('g:i a',$node->start_time));
+					$schedule_table_data[] = array(l($node->title, "node/".$node->cablecast_show_nid), date('g:i a',$node->start_time));
 				}
 			
 			}
@@ -651,3 +651,31 @@ function _cablecast_site_time() {
     return time()+$offset;
 }
  
+ 
+//Load some tokens for use
+
+function cablecast_token_values($type, $object = NULL, $options = array()) {
+    $values = array();
+
+    switch($type) {
+        case 'node' :
+            $node = $object;
+
+            $values['showID'] = $node->showID;
+            $values['project_name'] = $node->project_name;
+            break;
+    };
+
+    return $values;
+};
+function cablecast_token_list($type = 'all'){
+
+
+    if ($type == 'node' || $type == 'all'){
+
+        $tokens['node']['showID'] = t('Unique Cablecast ShowID');
+        $tokens['node']['project_name'] = t('Cablecast Project Name');
+
+    };
+    return $tokens;
+};
