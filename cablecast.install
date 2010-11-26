@@ -2,6 +2,55 @@
 // $Id: cablecast.install,v 1.1 2010/07/20 22:18:47 raytiley Exp $
 
 /**
+  * Implementation of hook_requirements().
+  */
+function cablecast_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+  
+  if ($phase == 'runtime') {
+    if($cablecast_server_uri = variable_get('cablecast_server_uri', 0)) {
+      
+      //Create a client and get WS Version
+      $cablecast_server_uri = $cablecast_server_uri."/CablecastWS/CablecastWS.asmx?WSDL";
+      $client = new SoapClient($cablecast_server_uri, array('cache_wsdl' => 0));
+      $ws_version = cablecast_get_ws_version($client);
+      $ws_version_stripped = (int)str_replace('.', '', $ws_version);
+      
+      if($ws_version_stripped >= 300)  {
+        //Version is OK
+        $requirements['cablecast'] = array(
+          'title' => $t('Cablecast WebService Version'), 
+          'value' => $ws_version,
+          'severity' => REQUIREMENT_OK,
+        );
+     }
+     else
+     {
+       //Version is to low
+       $requirements['cablecast'] = array(
+         'title' => $t('Cablecast'),
+         'value' => $ws_version,
+         'description' => t("The Required version for the Cablecast Drupal Module is 3.0.0"),
+         'severity'  => REQUIREMENT_ERROR,
+       );
+     }
+    }
+    else
+    {
+      //There was some weird error getting server uri
+      $requirements['cablecast'] = array(
+        'title' => $t('Cablecast'),
+        'value' => t("Cablecast Server Address"),
+        'description' => t("The Server address for this server seems to be configured incorrectly."),
+        'severity'  => REQUIREMENT_ERROR,
+      );
+    }
+  }
+  return $requirements;
+}
+
+/**
   * Implementation of hook_install().
   */
 function cablecast_install() {

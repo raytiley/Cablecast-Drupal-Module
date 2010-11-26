@@ -600,6 +600,18 @@ function cablecast_check_version($client)  {
     return $version >= 300;
 }
 
+function cablecast_get_ws_version($client) {
+  $version = 0;
+  try {
+      $response = $client->WSVersion();
+      $version = $response->WSVersionResult;
+  }
+  catch(SoapFault $fault)  {
+    watchdog("Cablecast", "Communicating to server caused the following error: ".$fault->faultstring);
+  }
+  return $version;
+}
+
 
 // adapted from http://drupal.org/files/issues/drupal-7-dev-336697-8.patch
 function _cablecast_get_taxonomy_term_by_name($name, $vocab_name = NULL) {
