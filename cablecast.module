@@ -297,7 +297,6 @@ function cablecast_theme() {
   );
 }
 
-
 function template_preprocess_cablecast_schedule_page(&$variables) {
   $schedule_table_header = array(t("Program Name"), t("Time"));
 	$schedule_table_data = array();
@@ -349,19 +348,13 @@ function cablecast_views_api() {
 }
 
 function cablecast_perm() {
-  return array('create cablecast_show', 'edit own cablecast_show', 'edit any cablecast_show', 'delete own cablecast_show', 'delete any cablecast_show');
+  return array(
+      'Administer Cablecast Content Types',
+    );
 }
 
 function cablecast_access($op, $node, $account) {
-  $is_author = $account->uid == $node->uid;
-  switch($op) {
-    case 'create':
-      return user_access('create cablecast_show', $account);
-    case 'update':
-      return user_access('edit own cablecast_show', $account) && $is_author || user_access('edit any cablecast_show', $account);
-    case 'delete':
-      return user_access('delete own cablecast_show', $account) && $is_author || user_access('delete any cablecast_show', $account);
-  }
+      return user_access('Administer Cablecast Content Types', $account);
 }
 
 function cablecast_sync_projects($client) {
@@ -436,7 +429,6 @@ function cablecast_sync_channels($client) {
     }
 }
 
-
 function cablecast_sync_categories($client) {
     try {
         $vid = db_result(
@@ -460,6 +452,7 @@ function cablecast_sync_categories($client) {
                     $term_exists = true;
                 }
             }
+            exit;
             if(!$term_exists) {
                 $term = array('name' => $category->Name,
                     'description' => 'Cablecast Category',
@@ -627,7 +620,6 @@ function cablecast_get_ws_version($client) {
   return $version;
 }
 
-
 // adapted from http://drupal.org/files/issues/drupal-7-dev-336697-8.patch
 function _cablecast_get_taxonomy_term_by_name($name, $vocab_name = NULL) {
     if($vocab_name) {
@@ -639,36 +631,32 @@ function _cablecast_get_taxonomy_term_by_name($name, $vocab_name = NULL) {
             );
     }
     $sql = NULL;
-  $args[] = $name;
-  // multiple vocabularies to select from?
-  if (is_array($vid)) {
+    $args[] = $name;
+    // multiple vocabularies to select from?
+    if (is_array($vid)) {
       $placeholders = array_fill(0, count($vid), '?');
-    $sql = ' AND t.vid IN (' . implode(', ', $placeholders) . ') ';
-    $args = array_merge($args, $vid);
-  }
-  // single vocabulary to select from?
-  if (is_numeric($vid)) {
-    $sql = ' AND t.vid = %d';
-    $args[] = $vid;
-  }
-  $db_result = db_query("SELECT t.tid, t.* FROM {term_data} t WHERE LOWER(t.name) = LOWER('%s')" . $sql, $args);
-   $result = array();
-   while ($term = db_fetch_object($db_result)) {
-     $result[] = $term;
-   }
-//   $debug = array($vocab_name, $vid, $args, $result);
-//   dpm($debug);
-   return $result;
- }
+      $sql = ' AND t.vid IN (' . implode(', ', $placeholders) . ') ';
+      $args = array_merge($args, $vid);
+    }
+    // single vocabulary to select from?
+    if (is_numeric($vid)) {
+      $sql = ' AND t.vid = %d';
+      $args[] = $vid;
+    }
+    $db_result = db_query("SELECT t.tid, t.* FROM {term_data} t WHERE LOWER(t.name) = LOWER('%s')" . $sql, $args);
+    $result = array();
+    while ($term = db_fetch_object($db_result)) {
+      $result[] = $term;
+    }
+    return $result;
+}
 
 function _cablecast_site_time() {
     $offset = variable_get('date_default_timezone', date('Z')) - date('Z');
     return time()+$offset;
 }
  
- 
 //Load some tokens for use
-
 function cablecast_token_values($type, $object = NULL, $options = array()) {
     $values = array();
 
@@ -683,6 +671,7 @@ function cablecast_token_values($type, $object = NULL, $options = array()) {
 
     return $values;
 };
+
 function cablecast_token_list($type = 'all'){
 
 
