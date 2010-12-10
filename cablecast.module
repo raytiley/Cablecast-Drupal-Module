@@ -158,7 +158,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['title'] = array(
         '#type' => 'textfield',
         '#title' => t("Title"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->title,
         '#weight' => -8,
         '#attributes' => array('readonly' => 'readonly'),
@@ -166,7 +166,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['internalTitle'] = array(
         '#type' => 'textfield',
         '#title' => t("Internal Title"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->internalTitle,
         '#weight' => -7,
         '#attributes' => array('readonly' => 'readonly'),        
@@ -174,7 +174,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['body'] = array(
         '#type' => 'textarea',
         '#title' => t("Description"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->body,
         '#weight' => -6,
         '#attributes' => array('readonly' => 'readonly'),
@@ -182,7 +182,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['trt'] = array(
         '#type' => 'textfield',
         '#title' => t("Total Run Time in Seconds"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->trt,
         '#weight' => -5,
         '#attributes' => array('readonly' => 'readonly'),
@@ -190,7 +190,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['event_date'] = array(
         '#type' => 'textfield',
         '#title' => t("Event Date as Unix Time Stamp"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->event_date,
         '#weight' => -4,
         '#attributes' => array('readonly' => 'readonly'),
@@ -198,7 +198,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['category_id'] = array(
         '#type' => 'textfield',
         '#title' => t("Cablecast Category ID"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->category_id,
         '#weight' => -3,
         '#attributes' => array('readonly' => 'readonly'),
@@ -206,7 +206,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['project_id'] = array(
         '#type' => 'textfield',
         '#title' => t("Cablecast Project ID"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->project_id,
         '#weight' => -2,
         '#attributes' => array('readonly' => 'readonly'),
@@ -214,7 +214,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['producer_id'] = array(
         '#type' => 'textfield',
         '#title' => t("Cablecast Producer ID"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->producer_id,
         '#weight' => -1,
         '#attributes' => array('readonly' => 'readonly'),
@@ -222,7 +222,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['producer_name'] = array(
         '#type' => 'textfield',
         '#title' => t("Cablecast Producer Name"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->producer_name,
         '#weight' => -0,
         '#attributes' => array('readonly' => 'readonly'),
@@ -230,7 +230,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['rating'] = array(
         '#type' => 'textfield',
         '#title' => t("Cablecast Rating"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->rating,
         '#weight' => 1,
         '#attributes' => array('readonly' => 'readonly'),
@@ -238,7 +238,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['dsk_bug_text'] = array(
         '#type' => 'textfield',
         '#title' => t("DSK Bug Text"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->dsk_bug_text,
         '#weight' => 2,
         '#attributes' => array('readonly' => 'readonly'),
@@ -246,7 +246,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['dsk_crawl_text'] = array(
         '#type' => 'textfield',
         '#title' => t("DSK Crawl Text"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->dsk_crawl_text,
         '#weight' => 3,
         '#attributes' => array('readonly' => 'readonly'),
@@ -254,7 +254,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['dsk_crawl_length'] = array(
         '#type' => 'textfield',
         '#title' => t("DSK Crawl Length in Seconds"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->dsk_crawl_length,
         '#weight' => 4,
         '#attributes' => array('readonly' => 'readonly'),
@@ -262,7 +262,7 @@ function cablecast_form(&$node, $form_state) {
       $form['cablecast']['streaming_file_url'] = array(
         '#type' => 'textfield',
         '#title' => t("Cablecast Steaming File URL"),
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#default_value' => $node->streaming_file_url,
         '#weight' => 5,
         '#attributes' => array('readonly' => 'readonly'),
