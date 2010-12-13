@@ -91,7 +91,7 @@ function cablecast_schedule_page() {
 		
 		}
 		//return theme_table($schedule_table_header, $schedule_table_data);
-		return theme('cablecast_schedule_page', $schedule_nodes);
+		return theme('cablecast_schedule_page', $schedule_nodes, $date);
 	}
 	else {
 		//ToDo - Return a list of links to Available channels
@@ -428,19 +428,14 @@ function cablecast_theme() {
   			      'arguments'  =>  array('node'),
     ),
           'cablecast_schedule_page' => array(
-              'arguments' =>  array('schedule_nodes' => NULL, 'schedule_table' => NULL),
+              'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL),
               'template' => 'cablecast_schedule_page',
     ),
   );
 }
 
 function template_preprocess_cablecast_schedule_page(&$variables) {
-  $schedule_table_header = array(t("Program Name"), t("Time"));
-	$schedule_table_data = array();
-	foreach($variables['schedule_nodes'] as $node ) {
-	  $schedule_table_data[] = array(l($node->title, "node/".$node->cablecast_show_nid), date('g:i a',$node->start_time));
-  }
-	$variables['schedule_table'] = theme_table($schedule_table_header, $schedule_table_data);
+
 }
 
 function theme_cablecast_show_internalTitle($node) {
@@ -491,7 +486,13 @@ function cablecast_perm() {
 }
 
 function cablecast_access($op, $node, $account) {
-      return user_access('Administer Cablecast Content Types', $account);
+	if($op == 'view') {
+		return user_access('access content', $account);
+	}
+	else {
+		return user_access('Administer Cablecast Content Types', $account);
+	}
+      
 }
 
 function cablecast_sync_projects($client) {
