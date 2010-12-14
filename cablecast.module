@@ -366,17 +366,21 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
     $node = node_prepare($node, $teaser);
 	switch($node->type) {
 		case 'cablecast_show':
-    		$node->content['internalTitle'] = array(
-					'#value' => theme('cablecast_show_internalTitle', $node),
-					'#weight' => 2,
-		    );
+			$node->content['project_name'] = array(
+				'#value'  =>  theme('cablecast_project_name', $node),
+				'#weight' =>  3,
+			);
 		    $node->content['trt'] = array(
 					'#value'  =>  theme('cablecast_show_trt', $node),
-					'#weight'  => 2,
+					'#weight'  => 1,
 		    );
+			$node->content['producer_name'] = array(
+				'#value' => theme('cablecast_producer_name', $node),
+				'#weight'  =>  2,
+			);
 		    $node->content['streaming_file_url'] = array(
 		      '#value' => theme('cablecast_show_streaming_file_url', $node),
-		      '#weight' => 3,
+		      '#weight' => 4,
 		    );
 			break;
 		case 'cablecast_schedule_event':
@@ -415,17 +419,20 @@ function cablecast_delete(&$node) {
 
 function cablecast_theme() {
   return array(
-          'cablecast_show_internalTitle' => array(
-              'arguments' => array('node'),
-    ),
+		  'cablecast_project_name'  =>  array(
+		  	  'arguments'  =>  array('node'),
+	),
           'cablecast_show_trt'  =>  array(
               'arguments'  =>  array('node'),
     ),
+		  'cablecast_producer_name'  => array(
+		  	'arguments'  => array('node'),
+	),
           'cablecast_show_streaming_file_url' => array(
             'arguments' => array('node'),
     ),
-  		    'cablecast_project_shows'  => array(
-  			      'arguments'  =>  array('node'),
+  		  'cablecast_project_shows'  => array(
+  			'arguments'  =>  array('node'),
     ),
           'cablecast_schedule_page' => array(
               'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL),
@@ -438,6 +445,16 @@ function template_preprocess_cablecast_schedule_page(&$variables) {
 
 }
 
+function theme_cablecast_project_name($node)  {
+	$output = "<div class=\"cablecast-project-name\"><strong>Project: </strong>".check_markup($node->project_name)."</div>";
+	return $output;
+}
+
+function theme_cablecast_producer_name($node)  {
+	$output = "<div class=\"cablecast-show-producer-name\"><strong>Producer: </strong>".check_markup($node->producer_name)."</div>";
+	return $output;
+}
+
 function theme_cablecast_show_internalTitle($node) {
   $output = '<div class="cablecast-show-internalTitle">'.
   check_markup($node->internalTitle).'</div><br />';
@@ -445,9 +462,11 @@ function theme_cablecast_show_internalTitle($node) {
 }
 
 function theme_cablecast_show_trt($node)  {
-  $output = '<div class="cablecast-show-trt">'.
-  check_markup($node->trt).'</div><br />';
-  return $output;
+	$node->cablecast_trt_formatted = floor($node->trt/ 3600).":".
+		cablecast_pad_with_zeros(floor(floor($node->trt % 3600) / 60), 2).":".
+		cablecast_pad_with_zeros(($node->trt % 60), 2);
+  	$output = "<div class=\"cablecast-show-trt\"><strong>Duration: </strong>$node->cablecast_trt_formatted</div><br />";
+	return $output;
 }
 
 function theme_cablecast_show_streaming_file_url($node) {
@@ -815,3 +834,8 @@ function cablecast_token_list($type = 'all'){
     };
     return $tokens;
 };
+
+function cablecast_pad_with_zeros($s, $n) 
+{
+	return sprintf("%0" . $n . "d", $s);
+}
