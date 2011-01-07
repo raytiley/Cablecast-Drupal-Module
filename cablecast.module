@@ -141,7 +141,7 @@ function cablecast_cron() {
   }
 }
 
-function cablecast_form(&$node, $form_state) {
+function cablecast_form($node, $form_state) {
   drupal_set_message(t("Because the Cablecast Server is treated as the master, all Cablecast fields are set to read-only."), 'status');
   switch($node->type) {
     case 'cablecast_show':
@@ -407,7 +407,7 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
 /**
  * Implementation of hook_delete()
  */
-function cablecast_delete(&$node) {
+function cablecast_delete($node) {
   switch($node->type) {
     case 'cablecast_show':
       db_query('DELETE FROM {cablecast_show} WHERE nid =%d', $node->nid);
@@ -445,7 +445,7 @@ function cablecast_theme() {
   );
 }
 
-function template_preprocess_cablecast_schedule_page(&$variables) {
+function template_preprocess_cablecast_schedule_page($variables) {
 
 }
 
@@ -583,7 +583,7 @@ function cablecast_sync_channels($client) {
                     'vid'  => $vid,
                     'weight' => 0,
                     );
-                taxonomy_save_term(&$term);
+                taxonomy_save_term($term);
             }
         }
     }
@@ -628,7 +628,7 @@ function cablecast_sync_categories($client) {
                             'weight' => 0,
                             );
                         $cablecast_added_categories[] = $category->Name;
-                        taxonomy_save_term(&$term);
+                        taxonomy_save_term($term);
                     }
                   }
               }
@@ -824,7 +824,7 @@ function cablecast_sync_locations($client){
                   'vid'  => $vid,
                   'weight' => 0,
                   );
-              taxonomy_save_term(&$term);
+              taxonomy_save_term($term);
           }
           //Find a ChannelID at this Location
           $channel_id = 0;
