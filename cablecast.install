@@ -60,8 +60,25 @@ function cablecast_install() {
     drupal_install_schema('cablecast_project');
     drupal_install_schema('cablecast_custom_field');
     
+    // set up locations taxonomy
+    $location_vocab = array(
+        'name' => 'Cablecast Locations',
+        'description' => t('Represents what location a Schedule Event, Show, or Project belong to.'),
+        'help' => 0,
+        'relations' => 0,
+        'hierarchy' =>0,
+        'multiple' => 0,
+        'required' => 0,
+        'tags'  => 0,
+        'module' => 'cablecast',
+        'weight' => 0,
+        'nodes' => array('cablecast_show' => 1, 'cablecast_schedule_event' => 1, 'cablecast_project' => 1),
+        );
+        
+        taxonomy_save_vocabulary($location_vocab);
+    
     // set up channels taxonomy
-    $vocab = array(
+    $channels_vocab = array(
         'name' => 'Cablecast Channels',
         'description' => t('Channels available on the Cablecast Server.  Used for Schedule'),
         'help' => 0,
@@ -75,10 +92,10 @@ function cablecast_install() {
         'nodes' => array('cablecast_schedule_event' => 1),
         );
         
-        taxonomy_save_vocabulary($vocab);
+        taxonomy_save_vocabulary($channels_vocab);
         
     // set up categories taxonomy
-    $vocab = array(
+    $categories_vocab = array(
         'name' => 'Cablecast Categories',
         'description' => t('Categories used to classify shows on the Cablecast Server.'),
         'help' => 0,
@@ -92,7 +109,7 @@ function cablecast_install() {
         'nodes' => array('cablecast_show' => 1),
         );
         
-        taxonomy_save_vocabulary($vocab);
+        taxonomy_save_vocabulary($categories_vocab);
 }
 
 /**
@@ -109,7 +126,7 @@ function cablecast_uninstall() {
     ////Delete Vocabs
     $vocabs = taxonomy_get_vocabularies();
     foreach($vocabs as $v) {
-      if($v->name == "Cablecast Channels" || $v->name == "Cablecast Categories") {
+      if($v->name == "Cablecast Channels" || $v->name == "Cablecast Categories" || $v->name == "Cablecast Locations") {
         taxonomy_del_vocabulary($v->vid);
       }
     }
@@ -156,6 +173,13 @@ function cablecast_show_schema() {
                 'default'  => 0,
                 'not null'  =>  TRUE,
                 'description'  => t('Cablecast ShowID.'),
+                ),
+            'cablecast_location_id'  => array(
+                'type' => 'int',
+                'unsigned'  =>  TRUE,
+                'default'  => 0,
+                'not null'  =>  TRUE,
+                'description'  => t('Cablecast LocationID.'),
                 ),
             'internalTitle'  => array(
                 'type' => 'text',
@@ -334,6 +358,13 @@ function cablecast_project_schema()  {
 				'default'  => 0,
 				'description'  => t("The cablecast shows {node}.nid."),
 				),
+  		'cablecast_location_id'  => array(
+          'type' => 'int',
+          'unsigned'  =>  TRUE,
+          'default'  => 0,
+          'not null'  =>  TRUE,
+          'description'  => t('Cablecast LocationID.'),
+          ),
 			'cablecast_project_has_podcast'  => array(
 				'type' => 'int',
 				'unsigned'  =>  TRUE,
