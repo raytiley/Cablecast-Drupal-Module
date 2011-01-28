@@ -90,8 +90,11 @@ function cablecast_schedule_page() {
 			}
 		
 		}
+		//Figure out Channel Name
+		$channel_name = $channel_tax[0]->name;
+		
 		//return theme_table($schedule_table_header, $schedule_table_data);
-		return theme('cablecast_schedule_page', $schedule_nodes, $date);
+		return theme('cablecast_schedule_page', $schedule_nodes, $date, $channel_name);
 	}
 	else {
 		//ToDo - Return a list of links to Available channels
@@ -132,7 +135,7 @@ function cablecast_cron() {
       watchdog("Cablecast", "End Cron");
 	}
 	else  {
-		watchdog("Cablecast", "Cablecast detected an Cablecast WebService version incompatiable with this module.");
+		watchdog("Cablecast", "Cablecast detected an Cablecast WebService version incompatible with this module.");
 	}
 	
 	$user = $original_user;
@@ -143,15 +146,15 @@ function cablecast_cron() {
 
 function cablecast_form($node, $form_state) {
   drupal_set_message(t("Because the Cablecast Server is treated as the master, all Cablecast fields are set to read-only."), 'status');
+  $form['cablecast'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cablecast Details'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -10,
+  );
   switch($node->type) {
     case 'cablecast_show':
-      $form['cablecast'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Cablecast Details'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#weight' => -10,
-      );
       $form['cablecast']['showID'] = array(
         '#type' => 'textfield',
         '#title' => t('ShowID'),
@@ -270,6 +273,106 @@ function cablecast_form($node, $form_state) {
         '#required' => FALSE,
         '#default_value' => $node->streaming_file_url,
         '#weight' => 5,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+    break;
+    case 'cablecast_project':
+      $form['cablecast']['cablecast_project_id'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Cablecast Project ID"),
+        '#required' => TRUE,
+        '#default_value' => $node->cablecast_project_id,
+        '#weight' => 0,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['cablecast_project_has_podcast'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Does this Project have a podcast"),
+        '#required' => FALSE,
+        '#default_value' => $node->cablecast_project_has_podcast,
+        '#weight' => 1,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['cablecast_project_podcast_name'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Name of Project Podcast"),
+        '#required' => FALSE,
+        '#default_value' => $node->cablecast_project_podcast_name,
+        '#weight' => 2,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['cablecast_project_podcast_description'] = array(
+        '#type' => 'textarea',
+        '#title' => t("Cablecast Project Podcast Description"),
+        '#required' => FALSE,
+        '#default_value' => $node->cablecast_project_podcast_description,
+        '#weight' => 3,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['cablecast_project_podcast_url'] = array(
+        '#type' => 'textfield',
+        '#title' => t("URL for Cablecast Project Podcast"),
+        '#required' => FALSE,
+        '#default_value' => $node->cablecast_project_podcast_url,
+        '#weight' => 4,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+    break;
+    case 'cablecast_schedule_event':
+      $form['cablecast']['scheduleID'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Cablecast Schedule Event ID"),
+        '#required' => FALSE,
+        '#default_value' => $node->scheduleID,
+        '#weight' => 1,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['showID'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Cablecast Schedule Event ShowID"),
+        '#required' => FALSE,
+        '#default_value' => $node->showID,
+        '#weight' => 2,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['cablecast_show_nid'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Drupal Node ID for Cablecast Show"),
+        '#required' => FALSE,
+        '#default_value' => $node->cablecast_show_nid,
+        '#weight' => 3,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['start_time'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Schedule Event Start Time as Unix Time Stamp"),
+        '#required' => FALSE,
+        '#default_value' => $node->start_time,
+        '#weight' => 4,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['end_time'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Schedule Event Start Time as Unix Time Stamp"),
+        '#required' => FALSE,
+        '#default_value' => $node->end_time,
+        '#weight' => 5,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['run_bump'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Cablecast Schedule Event Run Bump in Seconds"),
+        '#required' => FALSE,
+        '#default_value' => $node->run_bump,
+        '#weight' => 6,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+      $form['cablecast']['cg_exempt'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Is this Schedule Event CG Exempt"),
+        '#required' => FALSE,
+        '#default_value' => $node->cg_exempt,
+        '#weight' => 7,
         '#attributes' => array('readonly' => 'readonly'),
       );
     break;
@@ -439,7 +542,7 @@ function cablecast_theme() {
   			'arguments'  =>  array('node'),
     ),
           'cablecast_schedule_page' => array(
-              'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL),
+              'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL, 'channel_name' => NULL),
               'template' => 'cablecast_schedule_page',
     ),
   );
@@ -705,7 +808,7 @@ function cablecast_sync_schedule($client) {
 function cablecast_sync_shows($client, $location)  {
     try {
         $cablecast_location_id = $location["locationID"];
-        $cablecast_last_sync = variable_get('cablecast_last_sync', '1900-01-01T12:00:00');
+        $cablecast_last_sync = variable_get("cablecast_last_sync_location_".$cablecast_location_id, '1900-01-01T12:00:00');
         $params = array("LocationID" => $cablecast_location_id, "SearchDate" => $cablecast_last_sync, "DateComparator" => ">");
         $cablecast_updated_shows = $client->LastModifiedSearch($params);
         if($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo) {
@@ -751,7 +854,7 @@ function cablecast_sync_shows($client, $location)  {
                 $cablecast_last_sync = $show->LastModified;
             }
         }
-        variable_set('cablecast_last_sync', $cablecast_last_sync);
+        variable_set("cablecast_last_sync_location_".$cablecast_location_id, $cablecast_last_sync);
     }
     catch(SoapFault $fault)  {
       watchdog("Cablecast", "Communicating to server caused the following error: ".$fault->faultstring);
