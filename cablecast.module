@@ -450,7 +450,13 @@ function cablecast_load($node) {
     case "cablecast_project":
       $result = db_fetch_object(db_query('SELECT cablecast_project_id, cablecast_project_has_podcast, cablecast_project_podcast_name, cablecast_project_podcast_description, cablecast_project_podcast_url FROM {cablecast_project} WHERE vid=%d', $node->vid));
 	  $cablecast_shows = array();
-	  $show_nids = db_query("SELECT nid FROM {cablecast_show} WHERE project_id =  $result->cablecast_project_id ORDER BY event_date DESC");
+//	  $show_nids = db_query("SELECT nid FROM {cablecast_show} WHERE project_id =  $result->cablecast_project_id ORDER BY event_date DESC");
+      $limit = variable_get('cablecast_project_shows_per_page',NULL);
+      if(!$limit) {
+          $limit = 20;
+          variable_set('cablecast_project_shows_per_page',20);
+      }
+      $show_nids = pager_query("SELECT nid FROM {cablecast_show} WHERE project_id = %d ORDER BY event_date DESC",$limit,0,NULL, array($result->cablecast_project_id));
 	  while($r = db_fetch_array($show_nids))  {
             $show_node = node_load($r['nid']);
 			$show = new stdClass();
@@ -540,6 +546,7 @@ function cablecast_theme() {
     ),
   		  'cablecast_project_shows'  => array(
   			'arguments'  =>  array('node'),
+        'template' => 'cablecast_project_shows',
     ),
           'cablecast_schedule_page' => array(
               'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL, 'channel_name' => NULL),
@@ -586,17 +593,6 @@ function theme_cablecast_show_streaming_file_url($node) {
     $output = "";
   }
   return $output;
-}
-
-function theme_cablecast_project_shows($node)  {
-	$output = "<div class=\"cablecast-project-shows\">\n".
-			  "<table class=\"cablecast-project-shows-list\">\n".
-			  "<tr><th>Show Title</th><th>Show Description</th><th>Link</th></tr>\n";
-	foreach($node->cablecast_shows as $show)  {
-		$output = $output."<tr><td>".check_markup($show->title)."</td><td>".check_markup($show->body)."</td><td>".l('View More', 'node/'.$show->nid)."</td></tr>\n";
-	}
-	$output = $output."</table></div>\n";
-	return $output;
 }
 
 function cablecast_views_api() {
