@@ -1,11 +1,15 @@
-<?php
-$node = $variables[0];
-$output = "<div class=\"cablecast-project-shows\">\n".
-			  "<table class=\"cablecast-project-shows-list\">\n".
-			  "<tr><th>Show Title</th><th>Show Description</th><th>Link</th></tr>\n";
-	foreach($node->cablecast_shows as $show)  {
-		$output = $output."<tr><td>".check_markup($show->title)."</td><td>".check_markup($show->body)."</td><td>".l('View More', 'node/'.$show->nid)."</td></tr>\n";
-	}
-	$output = $output."</table>". theme('pager',array(), variable_get('cablecast_project_shows_per_page',20)). " </div>\n";
-	print $output;
+<?php //Setup Schedule Table Variables ?>
+<?php $shows_table_header = array(t("Show Title"), t("Show Description"), t("Link")); ?>
+<?php $shows_table = array() ?>
 
+<?php //Iterate through project shows and add a row for each run ?>
+<?php if($project_node->cablecast_shows): ?>
+	<?php foreach($project_node->cablecast_shows as $show): ?>
+		<?php $shows_table[] = array(check_markup($show->title), check_markup($show->body), l('View More', 'node/'.$show->nid)) ?>
+	<?php endforeach ?>
+<?php endif ?>
+
+<div class="cablecast-project-shows">
+  <?php print theme_table($shows_table_header, $shows_table) ?>
+	<?php print theme('pager', NULL, variable_get('cablecast_project_shows_per_page',20), 0) ?>
+</div>

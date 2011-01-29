@@ -20,14 +20,22 @@ function cablecast_admin_settings() {
 		'#size'	=>	'60',
 		'#description'	=>	t("Public address for your Cablecast Server"),
 		'#maxlength'	=>	'65',
-		);
+	);
 	$form['cablecast_default_project_name'] = array(
-	    '#type'  =>  'textfield',
-	    '#title'  =>  t('Default Project Title'),
-	    '#default_value'  =>  variable_get('cablecast_default_project_name', 'misc'),
-	    '#size'  => '60',
-	    '#description'  =>  t("This is used as a project name for shows that do not belong to a Cablecast Project.  Useful for pathauto urls."),
-	    '#maxLength'  =>  '60',
-	    );
+    '#type'  =>  'textfield',
+    '#title'  =>  t('Default Project Title'),
+    '#default_value'  =>  variable_get('cablecast_default_project_name', 'misc'),
+    '#size'  => '60',
+    '#description'  =>  t("This is used as a project name for shows that do not belong to a Cablecast Project.  Useful for pathauto urls."),
+    '#maxLength'  =>  '60',
+	);
+	$form['cablecast_project_shows_per_page'] = array(
+	  '#type' => 'textfield',
+	  '#title' => t('Shows per project page'),
+	  '#default_value' => variable_get('cablecast_project_shows_per_page', 20),
+	  '#size' => '3',
+	  '#description' => t('This value will determine how many shows are displayed on a project page.'),
+	  '#maxLength' => '3',
+	);
 	return system_settings_form($form);
 }

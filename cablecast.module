@@ -450,22 +450,18 @@ function cablecast_load($node) {
     case "cablecast_project":
       $result = db_fetch_object(db_query('SELECT cablecast_project_id, cablecast_project_has_podcast, cablecast_project_podcast_name, cablecast_project_podcast_description, cablecast_project_podcast_url FROM {cablecast_project} WHERE vid=%d', $node->vid));
 	  $cablecast_shows = array();
-//	  $show_nids = db_query("SELECT nid FROM {cablecast_show} WHERE project_id =  $result->cablecast_project_id ORDER BY event_date DESC");
-      $limit = variable_get('cablecast_project_shows_per_page',NULL);
-      if(!$limit) {
-          $limit = 20;
-          variable_set('cablecast_project_shows_per_page',20);
-      }
+      //$show_nids = db_query("SELECT nid FROM {cablecast_show} WHERE project_id =  $result->cablecast_project_id ORDER BY event_date DESC");
+      $limit = variable_get('cablecast_project_shows_per_page', 20);
       $show_nids = pager_query("SELECT nid FROM {cablecast_show} WHERE project_id = %d ORDER BY event_date DESC",$limit,0,NULL, array($result->cablecast_project_id));
-	  while($r = db_fetch_array($show_nids))  {
+	    while($r = db_fetch_array($show_nids))  {
             $show_node = node_load($r['nid']);
-			$show = new stdClass();
-			$show->title = $show_node->title;
-			$show->body = $show_node->body;
-			$show->nid = $show_node->nid;
-			$cablecast_shows[] = $show;
-        }
-	$result->cablecast_shows = $cablecast_shows;
+			      $show = new stdClass();
+			      $show->title = $show_node->title;
+			      $show->body = $show_node->body;
+			      $show->nid = $show_node->nid;
+			      $cablecast_shows[] = $show;
+      }
+	    $result->cablecast_shows = $cablecast_shows;
   }
   return $result;
 }
@@ -491,10 +487,10 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
 				'#value' => theme('cablecast_producer_name', $node),
 				'#weight'  =>  2,
 			);
-		    $node->content['streaming_file_url'] = array(
-		      '#value' => theme('cablecast_show_streaming_file_url', $node),
-		      '#weight' => 4,
-		    );
+	    $node->content['streaming_file_url'] = array(
+	      '#value' => theme('cablecast_show_streaming_file_url', $node),
+	      '#weight' => 4,
+	    );
 			break;
 		case 'cablecast_schedule_event':
 			break;
@@ -533,25 +529,25 @@ function cablecast_delete($node) {
 function cablecast_theme() {
   return array(
 		  'cablecast_project_name'  =>  array(
-		  	  'arguments'  =>  array('node'),
-	),
-          'cablecast_show_trt'  =>  array(
-              'arguments'  =>  array('node'),
-    ),
+		  	'arguments'  =>  array('node'),
+	    ),
+      'cablecast_show_trt'  =>  array(
+        'arguments'  =>  array('node'),
+      ),
 		  'cablecast_producer_name'  => array(
 		  	'arguments'  => array('node'),
-	),
-          'cablecast_show_streaming_file_url' => array(
-            'arguments' => array('node'),
-    ),
-  		  'cablecast_project_shows'  => array(
-  			'arguments'  =>  array('node'),
+	    ),
+      'cablecast_show_streaming_file_url' => array(
+        'arguments' => array('node'),
+      ),
+  		'cablecast_project_shows'  => array(
+  			'arguments'  =>  array('project_node' => NULL),
         'template' => 'cablecast_project_shows',
-    ),
-          'cablecast_schedule_page' => array(
-              'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL, 'channel_name' => NULL),
-              'template' => 'cablecast_schedule_page',
-    ),
+      ),
+      'cablecast_schedule_page' => array(
+        'arguments' =>  array('schedule_nodes' => NULL, 'schedule_date' => NULL, 'channel_name' => NULL),
+        'template' => 'cablecast_schedule_page',
+      ),
   );
 }
 
