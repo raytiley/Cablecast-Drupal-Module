@@ -641,7 +641,7 @@ function cablecast_sync_projects($client, $location) {
         $node->cablecast_project_podcast_description = $project->PodcastDescription;
         $node->cablecast_project_podcast_url = $project->PodcastUrl;
         $node->cablecast_location_id = $location["locationID"];
-        $node->taxonomy = $location["term"];
+        $node->taxonomy = cablecast_merge_terms($node, $location["term"]);
         node_save($node);
         }
     }
@@ -780,7 +780,8 @@ function cablecast_sync_schedule($client) {
                         $node->run_bump = $event->RunBump;
                         $node->cg_exempt = $event->CGExempt;
                         $node->status = $event->CGExempt ? 0 : 1;
-                        $node->taxonomy = _cablecast_get_taxonomy_term_by_name($channel->Name, 'Cablecast Channels');
+                        $new_term = _cablecast_get_taxonomy_term_by_name($channel->Name, 'Cablecast Channels');
+                        $node->taxonomy = cablecast_merge_terms($node, $new_term);
                         $node->cablecast_show_nid = $show_nid;
                         node_save($node);
                     }
@@ -838,7 +839,8 @@ function cablecast_sync_shows($client, $location)  {
                 $node->dsk_crawl_text = $show->CrawlText;
                 $node->dsk_crawl_length = $show->CrawlLengthInSeconds;
                 $category_term = _cablecast_get_taxonomy_term_by_name($show->Category, 'Cablecast Categories');
-                $node->taxonomy = array($category_term[0]->tid, $location["term"][0]->tid);
+                $new_term = array($category_term[0]->tid, $location["term"][0]->tid);
+                $node->taxonomy = cablecast_merge_terms($node, $new_term);
                 $node->cablecast_location_id = $location["locationID"];
                 $node->comment = 2;
                 node_save($node);
@@ -1007,4 +1009,31 @@ function cablecast_token_list($type = 'all'){
 function cablecast_pad_with_zeros($s, $n) 
 {
 	return sprintf("%0" . $n . "d", $s);
+}
+
+
+/**
+ * Merge taxonomy terms without removing terms from other vocabularies
+ * return an associative array that can be assigned to $node->taxonomy
+ * @param $node : node that is having terms added
+ * @param $terms : associative array of one or more taxonomy terms in the form: tid=>term
+ * 
+ */
+function cablecast_merge_terms($node, $new_terms) {
+    $taxonomy = taxonomy_node_get_terms($node);
+    if(is_array($new_terms)) {
+        foreach($new_terms as $new_tid=>$new_term) {
+            $vocabulary = db_fetch_object(db_query("SELECT * from {vocabulary} WHERE vid = %d",$new_term->vid));
+            // if not a freetagging vocabulary, remove existing terms in that vocabulary
+            if(! $vocabulary->multiple) {
+                foreach($taxonomy as $existing_tid=> $existing_term){
+                    if($existing_term->vid == $new_term->vid) {
+                        unset($taxonomy[$existing_tid]);
+                    }
+                }
+            }
+            $taxonomy[$new_term->tid] = $new_term;
+        }
+    }
+    return $taxonomy;
 }
