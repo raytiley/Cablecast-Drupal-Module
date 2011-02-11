@@ -839,7 +839,7 @@ function cablecast_sync_shows($client, $location)  {
                 $node->dsk_crawl_text = $show->CrawlText;
                 $node->dsk_crawl_length = $show->CrawlLengthInSeconds;
                 $category_term = _cablecast_get_taxonomy_term_by_name($show->Category, 'Cablecast Categories');
-                $new_term = array($category_term[0]->tid, $location["term"][0]->tid);
+                $new_term = array($category_term[0]->tid => $category_term[0]);
                 $node->taxonomy = cablecast_merge_terms($node, $new_term);
                 $node->cablecast_location_id = $location["locationID"];
                 $node->comment = 2;
@@ -1034,6 +1034,6 @@ function cablecast_merge_terms($node, $new_terms) {
             }
             $taxonomy[$new_term->tid] = $new_term;
         }
-    }
+    }    
     return $taxonomy;
 }
