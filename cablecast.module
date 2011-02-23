@@ -443,6 +443,22 @@ function cablecast_load($node) {
       else {
           $result->project_name = variable_get('cablecast_default_project_name', 'misc');
       }
+      //Add Upcoming airings
+      $result->upcoming_airings = array();
+      $daysToSearch = variable_get('cablecast_upcoming_airings_days', 30);
+      $upcoming_airing_nids = db_query("SELECT nid FROM {cablecast_schedule_event} WHERE start_time > %d AND start_time <= %d AND showID = %d ORDER BY start_time", time(), time() + (60*60*24*$daysToSearch), $result->showID);
+      while($r = db_fetch_array($upcoming_airing_nids)) {
+        $schedule_event_node = node_load($r['nid']);
+        foreach($schedule_event_node->taxonomy as $tax) {
+          if($tax->description == "Cablecast Channel") {
+            $airing_info = new stdClass();
+            $airing_info->unix_start_time = $schedule_event_node->start_time;
+            $airing_info->formated_start_time = date("l jS \of F Y h:i:s A", $schedule_event_node->start_time);
+            $airing_info->channel_name = $tax->name;
+            $result->upcoming_airings[] = $airing_info;
+          }
+        }
+      }
       break;
     case "cablecast_schedule_event":
       $result = db_fetch_object(db_query('SELECT scheduleID, showID, cablecast_show_nid, start_time, end_time, run_bump, cg_exempt FROM {cablecast_schedule_event} WHERE vid = %d', $node->vid));
@@ -491,6 +507,10 @@ function cablecast_view($node, $teaser = FALSE, $page = FALSE) {
 	      '#value' => theme('cablecast_show_streaming_file_url', $node),
 	      '#weight' => 4,
 	    );
+	    $node->content['upcoming_airings'] = array(
+	     '#value' => theme('cablecast_show_upcoming_airings', $node),
+	     '#weight' => 5,
+	    );
 			break;
 		case 'cablecast_schedule_event':
 			break;
@@ -538,6 +558,9 @@ function cablecast_theme() {
 		  	'arguments'  => array('node'),
 	    ),
       'cablecast_show_streaming_file_url' => array(
+        'arguments' => array('node'),
+      ),
+      'cablecast_show_upcoming_airings' => array(
         'arguments' => array('node'),
       ),
   		'cablecast_project_shows'  => array(
@@ -591,6 +614,23 @@ function theme_cablecast_show_streaming_file_url($node) {
   return $output;
 }
 
+function theme_cablecast_show_upcoming_airings($node) {
+  if(count($node->upcoming_airings) > 0)
+  {
+    $table_header = array("Channel", "Air Time");
+    $table_rows = array();
+    foreach($node->upcoming_airings as $airing) {
+      $table_rows[] = array($airing->channel_name, $airing->formated_start_time);
+    }
+    $output = "<h2>Upcoming Airings</h2>\n".theme_table($table_header, $table_rows);
+  }
+  else
+  {
+    $output = "";
+  }
+  return $output;
+}
+
 function cablecast_views_api() {
   return array(
     'api' => 2,
@@ -631,7 +671,6 @@ function cablecast_sync_projects($client, $location) {
         else {
           $project_nid = db_result(db_query("SELECT nid FROM {cablecast_project} WHERE cablecast_project_id=%d", $project->ProjectID));
           $node = node_load($project_nid);
-          watchdog("Cablecast", "Project is being updated");
         }
         $node->title = $project->Name;
         $node->body = $project->Description;
@@ -798,6 +837,7 @@ function cablecast_sync_schedule($client) {
 }
 
 function cablecast_sync_shows($client, $location)  {
+    watchdog("Cablecast", "Syncing shows for location: @locationName", array('@locationName' => $location['name']));
     try {
         $cablecast_location_id = $location["locationID"];
         $cablecast_last_sync = variable_get("cablecast_last_sync_location_".$cablecast_location_id, '1900-01-01T12:00:00');
@@ -808,6 +848,7 @@ function cablecast_sync_shows($client, $location)  {
                 $cablecast_updated_shows->LastModifiedSearchResult->ShowInfo = array($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo);
             }
             foreach($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo as $show) {
+                watchdog("Cablecast", "Syncing show: @showID", array('@showID' => $show->ShowID));
                 //Create a new node for shows that don't exist
                 $result = db_result(db_query("SELECT COUNT(nid) FROM {cablecast_show} WHERE showID=%d", $show->ShowID));
                 if($result == 0) {
@@ -841,8 +882,9 @@ function cablecast_sync_shows($client, $location)  {
                 $node->taxonomy = array($category_term[0]->tid, $location["term"][0]->tid);
                 $node->cablecast_location_id = $location["locationID"];
                 $node->comment = 2;
+                watchdog("Cablecast", "Syncing Show: @showName - at Location: @locationName", array('@showName' => $node->title, '@locationName' => $location['name']));
                 node_save($node);
-                cablecast_sync_custom_fields($node, $show->CustomFields);  //sync customr fields afer node_save so nid is available.
+                //cablecast_sync_custom_fields($node, $show->CustomFields);  //sync customr fields afer node_save so nid is available.
                 $cablecast_last_sync = $show->LastModified;
             }
         }
@@ -1008,3 +1050,20 @@ function cablecast_pad_with_zeros($s, $n)
 {
 	return sprintf("%0" . $n . "d", $s);
 }
+
+//Cablecast API functions
+
+function cablecast_load_node_from_showID($showID) {
+  if($showID > 1)
+  {
+    $show_nid = db_result(db_query("SELECT nid FROM {cablecast_show} WHERE showID=%d", $showID));
+    if($show_nid > 0)
+    {
+      return node_load($show_nid);
+    }
+  }
+  
+  return NULL;
+
+}
+
