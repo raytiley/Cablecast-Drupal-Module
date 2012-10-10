@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Cablecast Features feature.
+ */
+
+include_once 'cablecast_features.features.inc';
