@@ -1,0 +1,7 @@
+<?php
+
+function cablecast_help($path, $arg) {
+  if ($path == 'admin/help#first') { 
+   return t('A demonstration module.');
+  }
+}

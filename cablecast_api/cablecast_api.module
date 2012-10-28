@@ -1,0 +1,9 @@
+<?php
+
+function cablecast_api_get_controller($serverAddress) {
+  //Load cablecast classes
+  require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'cablecast_api') . '/cablecast_api.inc');
+
+  return new CablecastController($serverAddress);
+}
+
