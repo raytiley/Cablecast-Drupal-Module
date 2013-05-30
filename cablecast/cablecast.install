@@ -1,8 +1,20 @@
 <?php
 
 function cablecast_install() {
-	
+
   $t = get_t();
+
+  // set up categories taxonomy
+  $categories_vocab = new stdClass();
+  $categories_vocab->name = $t('Cablecast Categories');
+  $categories_vocab->machine_name = 'cablecast_categories';
+  $categories_vocab->description = $t('Categories used to classify shows on the Cablecast Server.');
+  $categories_vocab->hierarchy = 0;
+  $categories_vocab->module = 'cablecast';
+  taxonomy_vocabulary_save($categories_vocab);
+
+  variable_set('cablecast_categories_vid', $categories_vocab->vid);
+  
   node_types_rebuild();
   $types = node_type_get_types();
   $cablecast_show = $types['cablecast_show'];
@@ -30,6 +42,11 @@ function cablecast_install() {
 }
 
 function cablecast_uninstall() {
+
+  $categories_vid = variable_get('cablecast_categories_vid', false);
+  if($categories_vid) {
+    taxonomy_vocabulary_delete($categories_vid);
+  }
 
   // Gather all the example content that might have been created while this
   // module was enabled.  Simple selects still use db_query().
@@ -98,17 +115,18 @@ function _cablecast_installed_fields() {
     'cablecast_show_comments' => array(
       'field_name'  => 'cablecast_show_comments',
       'cardinality' => 1,
-      'type'        => 'text',
+      'type'        => 'text_long',
+      'module' => 'text',
     ),
     'cablecast_show_event_date' => array(
       'field_name' => 'cablecast_show_event_date',
       'cardinality' => 1,
-      'type' => 'datetime',
+      'type' => 'date',
     ),
     'cablecast_show_last_modified' => array(
       'field_name' => 'cablecast_show_last_modified',
       'cardinality' => 1,
-      'type' => 'datetime'
+      'type' => 'date'
     ),
     'cablecast_show_trt' => array(
       'field_name' => 'cablecast_show_trt',
@@ -119,6 +137,18 @@ function _cablecast_installed_fields() {
       'field_name' => 'cablecast_show_vod_url',
       'cardinality' => 1,
       'type' => 'text',
+    ),
+    //Taxonomy
+    'cablecast_category' => array(
+      'field_name' => 'cablecast_category',
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'vocabulary' => 'cablecast_categories',
+          'parent' => 0,
+        ),
+      ),
     ),
   );
 }
@@ -173,7 +203,7 @@ function _cablecast_installed_instances() {
     'cablecast_show_event_date' => array(
       'field_name' => 'cablecast_show_event_date',
       'label' => $t('Event Date'),
-      'type' => 'datetime',
+      'type' => 'date',
       'widget' => array(
         'type' => 'text_textfield',
       ),
@@ -181,7 +211,7 @@ function _cablecast_installed_instances() {
     'cablecast_show_last_modified' => array(
       'field_name' => 'cablecast_show_last_modified',
       'label' => $t('Last Modified'),
-      'type' => 'datetime',
+      'type' => 'date',
       'widget' => array(
         'type' => 'text_textfield',
       ),
@@ -198,6 +228,17 @@ function _cablecast_installed_instances() {
       'label' => $t('VOD Url'),
       'widget' => array(
         'type' => 'text_textfield',
+      ),
+    ),
+    // Taxonomy
+    'cablecast_category' => array(
+      'field_name' => 'cablecast_category',
+      'entity_type' => 'node',
+      'label' => $t('Category'),
+      'bundle' => 'cablecast_show',
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'options_select',
       ),
     ),
   );

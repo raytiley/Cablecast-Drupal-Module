@@ -51,3 +51,101 @@ function cablecast_configure_form($form, &$form_state) {
 
   return system_settings_form($form);
 }
+function cablecast_cron() {
+  if($cablecast_server_uri = variable_get('cablecast_server_url', 0)) {
+    
+    $cablecast_server_uri = $cablecast_server_uri . "/CablecastWS/CablecastWS.asmx?WSDL";
+    $client = new SoapClient($cablecast_server_uri, array('cache_wsdl' => 0));
+
+    _cablecast_sync_shows($client);
+  }
+}
+
+function _cablecast_sync_shows($client) {
+  watchdog('Cablecast', 'Syncing Shows');
+  try {
+      $cablecast_location_id = variable_get('cablecast_location_id', 22);
+      $cablecast_last_sync = variable_get("cablecast_last_sync_location_" . $cablecast_location_id,
+                                          '1900-01-01T12:00:00');
+
+      $params = array("LocationID" => $cablecast_location_id, "SearchDate" => $cablecast_last_sync, "DateComparator" => ">");
+
+      $cablecast_updated_shows = $client->LastModifiedSearch($params);
+
+      if(!is_array($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo)) {
+        $cablecast_updated_shows = array($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo);
+      }
+
+      foreach($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo as $show) {
+          watchdog("Cablecast", "Syncing show: @showID", array('@showID' => $show->ShowID));
+          $sql = 'SELECT entity_id FROM {field_data_cablecast_show_id} cc WHERE cc.cablecast_show_id_value = :show_id';
+          $nid = db_query($sql,
+            array(
+              ':show_id' => $show->ShowID,
+            )
+          )->fetchField();
+
+          if($nid == false) {
+            $node = new stdClass();
+            $node->type = 'cablecast_show';
+
+            node_object_prepare($node);
+
+            $node->language = LANGUAGE_NONE;
+            $node->uid =1;
+            
+          }
+          // Load node for shows that do exist
+          else {    
+            $node = node_load($nid);
+          }
+
+          $node->title = $show->Title;
+          $node->cablecast_show_id['und'][0]['value'] = $show->ShowID;
+          $node->cablecast_show_title['und'][0]['value'] = $show->InternalTitle;
+          $node->cablecast_show_cg_title['und'][0]['value'] = $show->Title;
+          $node->cablecast_show_comments['und'][0]['value'] = $show->Comments;
+          $node->cablecast_show_trt['und'][0]['value'] = $show->TotalSeconds;
+          $node->cablecast_show_event_date['und'][0]['value'] = $show->EventDate;
+          $node->cablecast_show_last_modified['und'][0]['value'] = $show->LastModified;
+          $node->cablecast_show_vod_url['und'][0]['value'] = $show->StreamingFileURL;
+
+          //Taxonomy
+          $node->cablecast_category['und'][]['tid'] = _cablecast_get_category_term($show->Category);
+
+          watchdog("Cablecast", "Syncing Show: @showName", array('@showName' => $node->title));
+          node_save($node);
+          $cablecast_last_sync = $show->LastModified;
+      }
+
+      variable_set("cablecast_last_sync_location_".$cablecast_location_id, $cablecast_last_sync);
+  }
+  catch(SoapFault $fault)  {
+    watchdog("Cablecast", "Communicating to server caused the following error: ".$fault->faultstring);
+  }
+}
+
+function _cablecast_get_category_term($category) {
+  $vid = variable_get('cablecast_categories_vid', false);
+  if($vid == false) {
+    throw new Exception("Could not find Cablecast Cateogory Taxonomy", 1);
+    
+  }
+
+  $terms = taxonomy_get_term_by_name($category);
+  foreach ($terms as $term) {
+    if($term->vid == $vid) {
+      return $term->tid;
+    }
+  }
+
+  //Term doesn't exist create it
+  $new_term = array(
+    'vid' => $vid,
+    'name' => $category,
+  );
+  $new_term = (object) $new_term;
+  taxonomy_term_save($new_term);
+
+  return $new_term->tid;
+}
