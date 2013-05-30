@@ -1,7 +1,17 @@
 <?php
 
-function cablecast_help($path, $arg) {
-  if ($path == 'admin/help#first') { 
-   return t('A demonstration module.');
-  }
+
+function cablecast_node_info() {
+  $items = array(
+    'cablecast_show' => array(
+      'name' => t('Cablecast Show'),
+      'base' => 'node_content',
+      'description' => t('Represents a show from a cablecast server.'),
+      'has_title' => TRUE,
+      'title_label' => t('Title'),
+      'help' => '',
+      'locked' => TRUE,
+    ),
+  );
+  return $items;
 }

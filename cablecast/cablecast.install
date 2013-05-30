@@ -1,0 +1,204 @@
+<?php
+
+function cablecast_install() {
+	
+  $t = get_t();
+  node_types_rebuild();
+  $types = node_type_get_types();
+  $cablecast_show = $types['cablecast_show'];
+
+  //We add a body field and set the body label immediately.
+  node_add_body_field($cablecast_show, $t('Body'));
+
+  // Save the content type
+  node_type_save($cablecast_show);
+
+  // Create all the fields we are adding to our content type.
+  // http://api.drupal.org/api/function/field_create_field/7
+  
+  foreach (_cablecast_installed_fields() as $field) {
+    field_create_field($field);
+  }
+
+  // Create all the instances for our fields.
+  // http://api.drupal.org/api/function/field_create_instance/7
+  foreach (_cablecast_installed_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = $cablecast_show->type;
+    field_create_instance($instance);
+  }
+}
+
+function cablecast_uninstall() {
+
+  // Gather all the example content that might have been created while this
+  // module was enabled.  Simple selects still use db_query().
+  // http://api.drupal.org/api/function/db_query/7
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'cablecast_show'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  // Delete all the nodes at once
+  // http://api.drupal.org/api/function/node_delete_multiple/7
+  node_delete_multiple($nids);
+
+  // Loop over each of the fields defined by this module and delete
+  // all instances of the field, their data, and the field itself.
+  // http://api.drupal.org/api/function/field_delete_field/7
+  foreach (array_keys(_cablecast_installed_fields()) as $field) {
+    field_delete_field($field);
+  }
+
+  // Loop over any remaining field instances attached to the node_example
+  // content type (such as the body field) and delete them individually.
+  // http://api.drupal.org/api/function/field_delete_field/7
+  $instances = field_info_instances('node', 'cablecast_show');
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
+  // Purge all field infromation
+  // http://api.drupal.org/api/function/field_purge_batch/7
+  field_purge_batch(1000);
+}
+
+function _cablecast_installed_fields() {
+  $t = get_t();
+  return array(
+    'cablecast_show_id' => array(
+      'field_name' => 'cablecast_show_id',
+      'cardinality' => 1,
+      'type' => 'number_integer'
+    ),
+    'cablecast_show_local_id' => array(
+      'field_name' => 'cablecast_show_local_id',
+      'cardinality' => 1,
+      'type'        => 'text',
+    ),
+    'cablecast_show_title' => array(
+      'field_name' => 'cablecast_show_title',
+      'cardinality' => 1,
+      'type' => 'text',
+    ),
+    'cablecast_show_cg_title' => array(
+      'field_name' => 'cablecast_show_cg_title',
+      'cardinality' => 1,
+      'type'        => 'text',
+    ),
+    'cablecast_show_cg_exempt' => array(
+      'field_name' => 'cablecast_show_cg_exempt',
+      'cardinality' => 1,
+      'type' => 'list_boolean',
+      'settings' => array(
+        'allowed_values' => array(0 => 0, 1 => 1),
+      ),
+    ),
+    'cablecast_show_comments' => array(
+      'field_name'  => 'cablecast_show_comments',
+      'cardinality' => 1,
+      'type'        => 'text',
+    ),
+    'cablecast_show_event_date' => array(
+      'field_name' => 'cablecast_show_event_date',
+      'cardinality' => 1,
+      'type' => 'datetime',
+    ),
+    'cablecast_show_last_modified' => array(
+      'field_name' => 'cablecast_show_last_modified',
+      'cardinality' => 1,
+      'type' => 'datetime'
+    ),
+    'cablecast_show_trt' => array(
+      'field_name' => 'cablecast_show_trt',
+      'cardinality' => 1,
+      'type' => 'number_integer',
+    ),
+    'cablecast_show_vod_url' => array(
+      'field_name' => 'cablecast_show_vod_url',
+      'cardinality' => 1,
+      'type' => 'text',
+    ),
+  );
+}
+
+function _cablecast_installed_instances() {
+  $t = get_t();
+  return array(
+    'cablecast_show_id' => array(
+      'field_name' => 'cablecast_show_id',
+      'label' => 'Show ID',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_local_id' => array(
+      'field_name' => 'cablecast_show_local_id',
+      'label'       => $t('Local ID'),
+      'widget'      => array(
+        'type'    => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_title' => array(
+      'field_name' => 'cablecast_show_title',
+      'label' => 'Show Title',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_cg_title' => array(
+      'field_name' => 'cablecast_show_cg_title',
+      'label'       => $t('CG Title'),
+      'widget'      => array(
+        'type'    => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_cg_exempt' => array(
+      'field_name' => 'cablecast_show_cg_exempt',
+      'label'       => $t('CG Exempt'),
+      'widget'      => array(
+        'type'    => 'options_onoff',
+        'settings' => array('display_label' => 1),
+      ),
+    ),
+    'cablecast_show_comments' => array(
+      'field_name'  => 'cablecast_show_comments',
+      'label' => $t('Comments'),
+      'type'        => 'text',
+      'widget'      => array(
+        'type'    => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_event_date' => array(
+      'field_name' => 'cablecast_show_event_date',
+      'label' => $t('Event Date'),
+      'type' => 'datetime',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_last_modified' => array(
+      'field_name' => 'cablecast_show_last_modified',
+      'label' => $t('Last Modified'),
+      'type' => 'datetime',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_trt' => array(
+      'field_name' => 'cablecast_show_trt',
+      'label' => $t('Total Run Time'),
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_vod_url' => array(
+      'field_name' => 'cablecast_show_vod_url',
+      'label' => $t('VOD Url'),
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+  );
+}
