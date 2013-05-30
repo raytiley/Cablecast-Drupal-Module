@@ -1,6 +1,5 @@
 <?php
 
-
 function cablecast_node_info() {
   $items = array(
     'cablecast_show' => array(
@@ -14,4 +13,41 @@ function cablecast_node_info() {
     ),
   );
   return $items;
+}
+
+function cablecast_menu() { 
+  $items = array(); 
+  $items['admin/config/cablecast'] = array( 
+    'title' => 'Cablecast Configuration',
+    'description' => 'Configuration for the Cablecast module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cablecast_configure_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function cablecast_configure_form($form, &$form_state) {
+  // Text Field for Cablecast Server URL
+  $form['cablecast_server_url'] = array( 
+    '#type' => 'textfield',
+    '#title' => t('Cablecast Server URL'),
+    '#description' => t('The publicly available url of your Cablecast server.'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#required' => TRUE,
+    '#default_value' => 'http://demo.trms.com',
+  ); 
+  // Textarea for the body of the e-mail. 
+  $form['cablecast_location_id'] = array( 
+    '#type' => 'textfield', 
+    '#size' => 3, 
+    '#title' => t('Cablecast Location ID'), 
+    '#required' => TRUE,
+    '#description' => t('The LocationID of the Cablecast Location you would like to sync from.'),
+    '#default_value' => 22,
+  );
+
+  return system_settings_form($form);
 }
