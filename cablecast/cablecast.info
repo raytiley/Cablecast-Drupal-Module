@@ -3,3 +3,5 @@ description = Automatically syncs cablecast content from a cablecast server.
 core = 7.x
 package = Cablecast
 version = 7.x-1.0
+
+configure = admin/config/cablecast
