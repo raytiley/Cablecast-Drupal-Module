@@ -176,6 +176,11 @@ function _cablecast_installed_fields() {
       'cardinality' => 1,
       'type' => 'text',
     ),
+    'cablecast_project_description' => array(
+      'field_name' => 'cablecast_project_description',
+      'cardinality' => 1,
+      'type' => 'text_long',
+    ),
     //Ignoring all the podcast stuff for project
     
     //Taxonomy
@@ -248,7 +253,7 @@ function _cablecast_installed_show_instances() {
       'label' => $t('Comments'),
       'type'        => 'text',
       'widget'      => array(
-        'type'    => 'text_textfield',
+        'type'    => 'text_textarea',
       ),
     ),
     'cablecast_show_event_date' => array(
@@ -327,5 +332,12 @@ function _cablecast_installed_project_instances() {
         'type' => 'text_textfield',
       ),
     ),
+    'cablecast_project_description' => array(
+      'field_name' => 'cablecast_project_description',
+      'label' => 'Project Description',
+      'widget' => array(
+        'type' => 'text_textarea',
+      ),
+    ), 
   );
 }

@@ -66,7 +66,63 @@ function cablecast_cron() {
     $cablecast_server_uri = $cablecast_server_uri . "/CablecastWS/CablecastWS.asmx?WSDL";
     $client = new SoapClient($cablecast_server_uri, array('cache_wsdl' => 0));
 
+    _cablecast_sync_projects($client);
     _cablecast_sync_shows($client);
+  }
+}
+
+function _cablecast_sync_projects($client) {
+  watchdog('Cablecast', 'Syncing Projects');
+  //Projects don't have a last modified date.
+  //So we need to manually see if they have changed by checking properties
+
+  //We need a channelID. This will only work for single location systems. We will make it more
+  //robust in the future.
+  $channels = $client->GetChannels();
+  $channels = $channels->GetChannelsResult->Channel;
+  if(!is_array($channels)) {
+    $channels = array($channels);
+  }
+
+  $channel_id = $channels[0]->ChannelID;
+
+  $projects = $client->GetProjects(array("ChannelID" => $channel_id));
+  $projects = $projects->GetProjectsResult->Project;
+  if(!is_array($projects)) {
+    $projects = array($projects);
+  }
+
+  foreach($projects as $project) {
+    //See if we already have the project in drupal
+    $sql = 'SELECT entity_id FROM {field_data_cablecast_project_id} cc WHERE cc.cablecast_project_id_value = :project_id';
+    $nid = db_query($sql, array(':project_id' => $project->ProjectID))->fetchField();
+
+
+    if($nid == false) {
+      $node = new stdClass();
+      $node->type = 'cablecast_project';
+
+      node_object_prepare($node);
+      $node->language = LANGUAGE_NONE;
+      $node->uid = 1;
+
+      //We only set the title and body on first creation
+      //This allows users to use these fields for what they want in drupal
+      //without values getting overridden on update
+      $node->title = $project->Name;
+      $node->body['und'][0]['value'] = $project->Description;
+    }
+    else {
+      $node = node_load($nid);
+    }
+
+    if(_cablecast_check_if_project_is_changed($node, $project)) {
+      $node->cablecast_project_id['und'][0]['value'] = $project->ProjectID;
+      $node->cablecast_project_name['und'][0]['value'] = $project->Name;
+      $node->cablecast_project_description['und'][0]['value'] = $project->Description;
+
+      node_save($node);
+    }
   }
 }
 
@@ -80,12 +136,13 @@ function _cablecast_sync_shows($client) {
       $params = array("LocationID" => $cablecast_location_id, "SearchDate" => $cablecast_last_sync, "DateComparator" => ">");
 
       $cablecast_updated_shows = $client->LastModifiedSearch($params);
+      $cablecast_updated_shows = $cablecast_updated_shows->LastModifiedSearchResult->ShowInfo;
 
-      if(!is_array($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo)) {
-        $cablecast_updated_shows = array($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo);
+      if(!is_array($cablecast_updated_shows)) {
+        $cablecast_updated_shows = array($cablecast_updated_shows);
       }
 
-      foreach($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo as $show) {
+      foreach($cablecast_updated_shows as $show) {
           watchdog("Cablecast", "Syncing show: @showID", array('@showID' => $show->ShowID));
           $sql = 'SELECT entity_id FROM {field_data_cablecast_show_id} cc WHERE cc.cablecast_show_id_value = :show_id';
           $nid = db_query($sql,
@@ -118,6 +175,7 @@ function _cablecast_sync_shows($client) {
           $node->cablecast_show_event_date['und'][0]['value'] = $show->EventDate;
           $node->cablecast_show_last_modified['und'][0]['value'] = $show->LastModified;
           $node->cablecast_show_vod_url['und'][0]['value'] = $show->StreamingFileURL;
+          $node->cablecast_show_project_reference['und'][0]['target_id'] = _cablecast_get_project_nid($show->ProjectID);
 
           //Taxonomy
           $node->cablecast_category['und'][]['tid'] = _cablecast_get_category_term($show->Category);
@@ -157,4 +215,17 @@ function _cablecast_get_category_term($category) {
   taxonomy_term_save($new_term);
 
   return $new_term->tid;
+}
+
+function _cablecast_check_if_project_is_changed($node, $project) {
+  return !($node->cablecast_project_name['und'][0]['value'] == $project->Name &&
+           $node->cablecast_project_description['und'][0]['value'] == $project->Description
+          ); 
+}
+
+function _cablecast_get_project_nid($project_id) {
+  $sql = 'SELECT entity_id FROM {field_data_cablecast_project_id} cc WHERE cc.cablecast_project_id_value = :project_id';
+    $nid = db_query($sql, array(':project_id' => $project_id))->fetchField();
+
+  return (int)$nid;
 }
