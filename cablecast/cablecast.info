@@ -5,3 +5,6 @@ package = Cablecast
 version = 7.x-1.0
 
 configure = admin/config/cablecast
+
+dependencies[] = entityreference
+dependencies[] = date

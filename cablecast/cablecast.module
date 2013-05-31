@@ -11,6 +11,15 @@ function cablecast_node_info() {
       'help' => '',
       'locked' => TRUE,
     ),
+    'cablecast_project' => array(
+      'name' => t('Cablecasst Project'),
+      'base' => 'node_content',
+      'description' => t('Represents a Cablecast Project.'),
+      'has_title' => TRUE,
+      'title_label' => t('Name'),
+      'help' => '',
+      'locked' => TRUE,
+    ),
   );
   return $items;
 }

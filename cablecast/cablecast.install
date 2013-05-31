@@ -14,16 +14,19 @@ function cablecast_install() {
   taxonomy_vocabulary_save($categories_vocab);
 
   variable_set('cablecast_categories_vid', $categories_vocab->vid);
-  
+
   node_types_rebuild();
   $types = node_type_get_types();
   $cablecast_show = $types['cablecast_show'];
+  $cablecast_project = $types['cablecast_project'];
 
   //We add a body field and set the body label immediately.
   node_add_body_field($cablecast_show, $t('Body'));
+  node_add_body_field($cablecast_project, $t('Body'));
 
   // Save the content type
   node_type_save($cablecast_show);
+  node_type_save($cablecast_project);
 
   // Create all the fields we are adding to our content type.
   // http://api.drupal.org/api/function/field_create_field/7
@@ -34,9 +37,15 @@ function cablecast_install() {
 
   // Create all the instances for our fields.
   // http://api.drupal.org/api/function/field_create_instance/7
-  foreach (_cablecast_installed_instances() as $instance) {
+  foreach (_cablecast_installed_show_instances() as $instance) {
     $instance['entity_type'] = 'node';
     $instance['bundle'] = $cablecast_show->type;
+    field_create_instance($instance);
+  }
+
+  foreach(_cablecast_installed_project_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = $cablecast_project->type;
     field_create_instance($instance);
   }
 }
@@ -51,9 +60,21 @@ function cablecast_uninstall() {
   // Gather all the example content that might have been created while this
   // module was enabled.  Simple selects still use db_query().
   // http://api.drupal.org/api/function/db_query/7
+
+  $nids = array();
+
+  // Delete all the shows
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
   $result = db_query($sql, array(':type' => 'cablecast_show'));
-  $nids = array();
+  
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  // Delete all the projects
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'cablecast_project'));
+  
   foreach ($result as $row) {
     $nids[] = $row->nid;
   }
@@ -76,6 +97,11 @@ function cablecast_uninstall() {
   foreach ($instances as $instance_name => $instance) {
     field_delete_instance($instance);
   }
+
+  $instances = field_info_instances('node', 'cablecast_project');
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
   // Purge all field infromation
   // http://api.drupal.org/api/function/field_purge_batch/7
   field_purge_batch(1000);
@@ -84,6 +110,7 @@ function cablecast_uninstall() {
 function _cablecast_installed_fields() {
   $t = get_t();
   return array(
+    //  Show Record Fields
     'cablecast_show_id' => array(
       'field_name' => 'cablecast_show_id',
       'cardinality' => 1,
@@ -138,6 +165,19 @@ function _cablecast_installed_fields() {
       'cardinality' => 1,
       'type' => 'text',
     ),
+    // Project Fields
+    'cablecast_project_id' => array(
+      'field_name' => 'cablecast_project_id',
+      'cardinality' => 1,
+      'type' => 'number_integer',
+    ),
+    'cablecast_project_name' => array(
+      'field_name' => 'cablecast_project_name',
+      'cardinality' => 1,
+      'type' => 'text',
+    ),
+    //Ignoring all the podcast stuff for project
+    
     //Taxonomy
     'cablecast_category' => array(
       'field_name' => 'cablecast_category',
@@ -150,10 +190,21 @@ function _cablecast_installed_fields() {
         ),
       ),
     ),
+
+    //Reference fields
+    'cablecast_show_project_reference' => array(
+      'field_name' => 'cablecast_show_project_reference',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('cablecast_project'))
+      ),
+    ),
   );
 }
 
-function _cablecast_installed_instances() {
+function _cablecast_installed_show_instances() {
   $t = get_t();
   return array(
     'cablecast_show_id' => array(
@@ -239,6 +290,41 @@ function _cablecast_installed_instances() {
       'required' => FALSE,
       'widget' => array(
         'type' => 'options_select',
+      ),
+    ),
+
+    //Reference Fields
+    'cablecast_show_project_reference' => array(
+      'field_name' => 'cablecast_show_project_reference',
+      'entity_type' => 'node',
+      'bundle' => 'cablecast_show',
+      'label' => 'Project',
+      'widget' => array(
+        'type' => 'options_select'
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => 'cablecast_project'),
+      ),
+    ),
+  );
+}
+
+function _cablecast_installed_project_instances() {
+  $t = get_t();
+  return array(
+    'cablecast_project_id' => array(
+      'field_name' => 'cablecast_project_id',
+      'label' => 'Project ID',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_project_name' => array(
+      'field_name' => 'cablecast_project_name',
+      'label' => 'Project Name',
+      'widget' => array(
+        'type' => 'text_textfield',
       ),
     ),
   );
