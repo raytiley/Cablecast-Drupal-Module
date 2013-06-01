@@ -184,7 +184,6 @@ function _cablecast_installed_fields() {
       'field_name'  => 'cablecast_show_comments',
       'cardinality' => 1,
       'type'        => 'text_long',
-      'module' => 'text',
     ),
     'cablecast_show_event_date' => array(
       'field_name' => 'cablecast_show_event_date',
@@ -270,8 +269,10 @@ function _cablecast_installed_fields() {
       'cardinality' => 1,
       'settings' => array(
         'allowed_values' => array(
-          'vocabulary' => 'cablecast_categories',
-          'parent' => 0,
+          array(
+            'vocabulary' => 'cablecast_categories',
+            'parent' => 0,
+          ),
         ),
       ),
     ),
@@ -314,7 +315,7 @@ function _cablecast_installed_show_instances() {
       'field_name' => 'cablecast_show_id',
       'label' => 'Show ID',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     'cablecast_show_local_id' => array(
@@ -349,7 +350,6 @@ function _cablecast_installed_show_instances() {
     'cablecast_show_comments' => array(
       'field_name'  => 'cablecast_show_comments',
       'label' => $t('Comments'),
-      'type'        => 'text',
       'widget'      => array(
         'type'    => 'text_textarea',
       ),
@@ -359,7 +359,7 @@ function _cablecast_installed_show_instances() {
       'label' => $t('Event Date'),
       'type' => 'date',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'date_text',
       ),
     ),
     'cablecast_show_last_modified' => array(
@@ -367,14 +367,14 @@ function _cablecast_installed_show_instances() {
       'label' => $t('Last Modified'),
       'type' => 'date',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'date_text',
       ),
     ),
     'cablecast_show_trt' => array(
       'field_name' => 'cablecast_show_trt',
       'label' => $t('Total Run Time'),
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     'cablecast_show_vod_url' => array(
@@ -420,7 +420,7 @@ function _cablecast_installed_project_instances() {
       'field_name' => 'cablecast_project_id',
       'label' => 'Project ID',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     'cablecast_project_name' => array(
@@ -447,7 +447,7 @@ function _cablecast_installed_channel_instances() {
       'field_name' => 'cablecast_channel_id',
       'label' => 'Channel ID',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     'cablecast_channel_name' => array(
@@ -467,7 +467,7 @@ function _cablecast_installed_schedule_item_instances() {
       'field_name' => 'cablecast_schedule_item_id',
       'label' => 'Scheudle Item ID',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     'cablecast_schedule_start_time' => array(
@@ -475,7 +475,7 @@ function _cablecast_installed_schedule_item_instances() {
       'label' => $t('Start Time'),
       'type' => 'date',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'date_text',
       ),
     ),
     'cablecast_schedule_end_time' => array(
@@ -483,21 +483,21 @@ function _cablecast_installed_schedule_item_instances() {
       'label' => $t('Start Time'),
       'type' => 'date',
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'date_text',
       ),
     ),
     'cablecast_schedule_show_id' => array(
       'field_name' => 'cablecast_schedule_show_id',
       'label' => $t('Show ID'),
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     'cablecast_schedule_channel_id' => array(
       'field_name' => 'cablecast_schedule_channel_id',
       'label' => $t('Channel ID'),
       'widget' => array(
-        'type' => 'text_textfield',
+        'type' => 'number',
       ),
     ),
     //Reference Fields
