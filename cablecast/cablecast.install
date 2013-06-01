@@ -155,7 +155,7 @@ function _cablecast_installed_fields() {
     'cablecast_show_id' => array(
       'field_name' => 'cablecast_show_id',
       'cardinality' => 1,
-      'type' => 'number_integer'
+      'type' => 'number_integer',
     ),
     'cablecast_show_local_id' => array(
       'field_name' => 'cablecast_show_local_id',
