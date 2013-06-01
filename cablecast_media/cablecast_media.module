@@ -1,0 +1,25 @@
+<?php
+
+function cablecast_media_node_presave($node) {
+	if($node->type == 'cablecast_show') {
+		try {
+    $cablecast_server_uri = variable_get('cablecast_server_url', 0);
+    $show_id = $node->cablecast_show_id['und'][0]['value'];
+    $thumbnail_url = $cablecast_server_uri . 
+                            "/Cablecast/ShowFiles/" . 
+                            $show_id . 
+                            "/_thumbnail-1.png";
+
+    $destination = 'public://' . $show_id . '.png';
+
+    $file = system_retrieve_file($thumbnail_url, $destination, TRUE);
+    
+    if($file->fid > 0) {
+      $node->cablecast_show_thumbnail['und'][0]['fid'] = $file->fid;
+    }
+
+    } catch (Exception $e) {
+      //Just don't do anything
+    }
+	}
+}
