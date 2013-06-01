@@ -16,9 +16,12 @@ function cablecast_install() {
   variable_set('cablecast_categories_vid', $categories_vocab->vid);
 
   node_types_rebuild();
+
   $types = node_type_get_types();
   $cablecast_show = $types['cablecast_show'];
   $cablecast_project = $types['cablecast_project'];
+  $cablecast_channel = $types['cablecast_channel'];
+  $cablecast_schedule_item = $types['cablecast_schedule_item'];
 
   //We add a body field and set the body label immediately.
   node_add_body_field($cablecast_show, $t('Body'));
@@ -46,6 +49,18 @@ function cablecast_install() {
   foreach(_cablecast_installed_project_instances() as $instance) {
     $instance['entity_type'] = 'node';
     $instance['bundle'] = $cablecast_project->type;
+    field_create_instance($instance);
+  }
+
+  foreach(_cablecast_installed_channel_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = $cablecast_channel->type;
+    field_create_instance($instance);
+  }
+
+  foreach(_cablecast_installed_schedule_item_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = $cablecast_schedule_item->type;
     field_create_instance($instance);
   }
 }
@@ -79,6 +94,22 @@ function cablecast_uninstall() {
     $nids[] = $row->nid;
   }
 
+  // Delete all the channels
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'cablecast_channel'));
+  
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  // Delete all the schedule items
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'cablecast_schedule_item'));
+  
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
   // Delete all the nodes at once
   // http://api.drupal.org/api/function/node_delete_multiple/7
   node_delete_multiple($nids);
@@ -99,6 +130,16 @@ function cablecast_uninstall() {
   }
 
   $instances = field_info_instances('node', 'cablecast_project');
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
+
+  $instances = field_info_instances('node', 'cablecast_channel');
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
+
+  $instances = field_info_instances('node', 'cablecast_schedule_item');
   foreach ($instances as $instance_name => $instance) {
     field_delete_instance($instance);
   }
@@ -182,6 +223,45 @@ function _cablecast_installed_fields() {
       'type' => 'text_long',
     ),
     //Ignoring all the podcast stuff for project
+
+    //Channel Fields
+    'cablecast_channel_id' => array(
+      'field_name' => 'cablecast_channel_id',
+      'cardinality' => 1,
+      'type' => 'number_integer',
+    ),
+    'cablecast_channel_name' => array(
+      'field_name' => 'cablecast_channel_name',
+      'cardinality' => 1,
+      'type' => 'text',
+    ),
+
+    //Schedule Item Fields
+    'cablecast_schedule_item_id' => array(
+      'field_name' => 'cablecast_schedule_item_id',
+      'cardinality' => 1,
+      'type' => 'number_integer',
+    ),
+    'cablecast_schedule_start_time' => array(
+      'field_name' => 'cablecast_schedule_start_time',
+      'cardinality' => 1,
+      'type' => 'date',
+    ),
+    'cablecast_schedule_end_date_time' => array(
+      'field_name' => 'cablecast_schedule_end_time',
+      'cardinality' => 1,
+      'type' => 'date',
+    ),
+    'cablecast_schedule_channel_id' => array(
+      'field_name' => 'cablecast_schedule_channel_id',
+      'cardinality' => 1,
+      'type' => 'number_integer',
+    ),
+    'cablecast_schedule_show_id' => array(
+      'field_name' => 'cablecast_schedule_show_id',
+      'cardinality' => 1,
+      'type' => 'number_integer',
+    ),
     
     //Taxonomy
     'cablecast_category' => array(
@@ -197,13 +277,31 @@ function _cablecast_installed_fields() {
     ),
 
     //Reference fields
-    'cablecast_show_project_reference' => array(
-      'field_name' => 'cablecast_show_project_reference',
+    'cablecast_project_reference' => array(
+      'field_name' => 'cablecast_project_reference',
       'type' => 'entityreference',
       'cardinality' => 1,
       'settings' => array(
         'target_type' => 'node',
         'handler_settings' => array('target_bundles' => array('cablecast_project'))
+      ),
+    ),
+    'cablecast_show_reference' => array(
+      'field_name' => 'cablecast_show_reference',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('cablecast_show'))
+      ),
+    ),
+    'cablecast_channel_reference' => array(
+      'field_name' => 'cablecast_channel_reference',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('cablecast_channel'))
       ),
     ),
   );
@@ -299,8 +397,8 @@ function _cablecast_installed_show_instances() {
     ),
 
     //Reference Fields
-    'cablecast_show_project_reference' => array(
-      'field_name' => 'cablecast_show_project_reference',
+    'cablecast_project_reference' => array(
+      'field_name' => 'cablecast_project_reference',
       'entity_type' => 'node',
       'bundle' => 'cablecast_show',
       'label' => 'Project',
@@ -339,5 +437,96 @@ function _cablecast_installed_project_instances() {
         'type' => 'text_textarea',
       ),
     ), 
+  );
+}
+
+function _cablecast_installed_channel_instances() {
+  $t = get_t();
+  return array(
+    'cablecast_channel_id' => array(
+      'field_name' => 'cablecast_channel_id',
+      'label' => 'Channel ID',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_channel_name' => array(
+      'field_name' => 'cablecast_channel_name',
+      'label' => 'Channel Name',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+  );
+}
+
+function _cablecast_installed_schedule_item_instances() {
+  $t = get_t();
+  return array(
+    'cablecast_schedule_item_id' => array(
+      'field_name' => 'cablecast_schedule_item_id',
+      'label' => 'Scheudle Item ID',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_schedule_start_time' => array(
+      'field_name' => 'cablecast_schedule_start_time',
+      'label' => $t('Start Time'),
+      'type' => 'date',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_schedule_end_time' => array(
+      'field_name' => 'cablecast_schedule_end_time',
+      'label' => $t('Start Time'),
+      'type' => 'date',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_schedule_show_id' => array(
+      'field_name' => 'cablecast_schedule_show_id',
+      'label' => $t('Show ID'),
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_schedule_channel_id' => array(
+      'field_name' => 'cablecast_schedule_channel_id',
+      'label' => $t('Channel ID'),
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    //Reference Fields
+    'cablecast_channel_reference' => array(
+      'field_name' => 'cablecast_channel_reference',
+      'entity_type' => 'node',
+      'bundle' => 'cablecast_channel',
+      'label' => 'Channel',
+      'widget' => array(
+        'type' => 'options_select'
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => 'cablecast_channel'),
+      ),
+    ),
+    //Reference Fields
+    'cablecast_show_reference' => array(
+      'field_name' => 'cablecast_show_reference',
+      'entity_type' => 'node',
+      'bundle' => 'cablecast_show',
+      'label' => 'Show',
+      'widget' => array(
+        'type' => 'options_select'
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => 'cablecast_show'),
+      ),
+    ),
   );
 }
