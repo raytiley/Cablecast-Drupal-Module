@@ -323,6 +323,10 @@ function _cablecast_sync_shows($client) {
           }
 
           watchdog("Cablecast", "Syncing Show: @showName", array('@showName' => $node->title));
+
+          //Give Other modules a chance to extract data, specifically custom fields
+          module_invoke_all('cablecast_show_presave', $node, $show);
+
           node_save($node);
           $cablecast_last_sync = $show->LastModified;
       }
