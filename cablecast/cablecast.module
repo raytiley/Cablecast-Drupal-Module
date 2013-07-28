@@ -318,7 +318,9 @@ function _cablecast_sync_shows($client) {
           $node->cablecast_project_reference['und'][0]['target_id'] = _cablecast_get_project_nid($show->ProjectID);
 
           //Taxonomy
-          $node->cablecast_category['und'][]['tid'] = _cablecast_get_category_term($show->Category);
+          if(!empty($show->Category)) {
+            $node->cablecast_category['und'][]['tid'] = _cablecast_get_category_term($show->Category);
+          }
 
           watchdog("Cablecast", "Syncing Show: @showName", array('@showName' => $node->title));
           node_save($node);
