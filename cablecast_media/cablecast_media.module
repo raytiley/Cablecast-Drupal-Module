@@ -2,6 +2,13 @@
 
 function cablecast_media_node_presave($node) {
 	if($node->type == 'cablecast_show') {
+
+    // We only want to get the image if it doesn't already exist
+    // This way a user can replace the image after the show is created.
+    if($node->cablecast_show_thumbnail['und'][0]['fid'] > 0) {
+      return;
+    }
+
 		try {
       //Check if directory is writeable
       $cablecast_media_files = 'public://cablecast';
