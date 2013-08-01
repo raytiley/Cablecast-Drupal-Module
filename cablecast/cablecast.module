@@ -122,10 +122,16 @@ function _cablecast_sync_schedule($client) {
     );
     
     $schedule_events = $client->GetScheduleInformation($params);
-
     $schedule_events = $schedule_events->GetScheduleInformationResult->ScheduleInfo;
+    
+    // Schedule events can be an array, single run, or NULL
+    // We need to normalize to an array
     if(!is_array($schedule_events)) {
-      $schedule_events = array($schedule_events);
+      if($schedule_events == NULL) {
+        $schedule_events = array();
+      } else {
+        $schedule_events = array($schedule_events);
+      }
     }
 
     foreach($schedule_events as $run) {
