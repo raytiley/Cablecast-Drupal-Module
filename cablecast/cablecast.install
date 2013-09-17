@@ -249,7 +249,23 @@ function _cablecast_installed_fields() {
     'cablecast_schedule_end_date_time' => array(
       'field_name' => 'cablecast_schedule_end_time',
       'cardinality' => 1,
-      'type' => 'date',
+      'settings' => array(
+        'cache_count' => '4',
+        'cache_enabled' => 0,
+        'granularity' => array(
+          'day' => 'day',
+          'hour' => 'hour',
+          'minute' => 'minute',
+          'month' => 'month',
+          'second' => 'second',
+          'year' => 'year',
+        ),
+        'timezone_db' => 'UTC',
+        'todate' => '',
+        'tz_handling' => 'site',
+      ),
+      'translatable' => '0',
+      'type' => 'datetime',
     ),
     'cablecast_schedule_channel_id' => array(
       'field_name' => 'cablecast_schedule_channel_id',
