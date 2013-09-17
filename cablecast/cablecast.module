@@ -165,8 +165,10 @@ function _cablecast_sync_schedule($client) {
       if(_cablecast_is_run_changed($node, $run, $channel->ChannelID)) {
 
         $node->cablecast_schedule_item_id['und'][0]['value'] = $run->ScheduleID;
-        $node->cablecast_schedule_start_time['und'][0]['value'] = $run->StartTime;
-        $node->cablecast_schedule_end_time['und'][0]['value'] = $run->EndTime;
+        $node->cablecast_schedule_start_time['und'][0]['value'] = gmdate('Y-m-d\TH:i:s', 
+          strtotime($run->StartTime));
+        $node->cablecast_schedule_end_time['und'][0]['value'] = gmdate('Y-m-d\TH:i:s', 
+          strtotime($run->EndTime));
         $node->cablecast_schedule_show_id['und'][0]['value'] = $run->ShowID;
         $node->cablecast_schedule_channel_id['und'][0]['value'] = $channel->ChannelID;
         $node->cablecast_show_reference['und'][0]['target_id'] = (int)$show_nid;
