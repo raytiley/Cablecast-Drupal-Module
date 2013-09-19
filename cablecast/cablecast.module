@@ -98,6 +98,13 @@ function _cablecast_sync_schedule($client) {
 
   $channels = $client->GetChannels();
   $channels = $channels->GetChannelsResult->Channel;
+
+  // This shouldn't happen, but its possible there are no channels
+  if($channels == null) {
+    return;
+  }
+
+  //Guard against 1 channel
   if(!is_array($channels)) {
     $channels = array($channels);
   }
@@ -106,18 +113,16 @@ function _cablecast_sync_schedule($client) {
 
   $sql = 'SELECT entity_id FROM {field_data_cablecast_schedule_start_time} cc WHERE cc.cablecast_schedule_start_time_value > :start_time';
   $schedule_nids = db_query($sql, array(':start_time' => $start_time))->fetchCol();
+  $schedule_nids = array_map('intval', $schedule_nids);
 
   foreach($channels as $channel) {
     //We'll need the channel nid later
     $channel_nid = _cablecast_get_channel_nid($channel->ChannelID);
     
-    
-    $schedule_nids = array_map('intval', $schedule_nids);
-
     $params = array(
       'ChannelID' => $channel->ChannelID,
       'FromDate' =>  date('Y-m-d\T00:00:00', time() - 60*60*24*3),
-      'ToDate'  =>  date('Y-m-d\T23:59:59', time() +60*60*24*30),
+      'ToDate'  =>  date('Y-m-d\T23:59:59', time() + 60*60*24*30),
       'restrictToShowID'  =>  0,
     );
     
@@ -156,7 +161,7 @@ function _cablecast_sync_schedule($client) {
         $node->title = $run->ShowTitle;
 
       } else {
-        $node = node_load($nid);
+        $node = node_load($nid, NULL, TRUE);
         if($key = array_search($nid, $schedule_nids))  {
           unset($schedule_nids[$key]);
         }
@@ -286,12 +291,17 @@ function _cablecast_sync_shows($client) {
       $cablecast_updated_shows = $client->LastModifiedSearch($params);
       $cablecast_updated_shows = $cablecast_updated_shows->LastModifiedSearchResult->ShowInfo;
 
+      //Guard against no results.
+      if($cablecast_updated_shows == NULL) {
+        return;
+      }
+
+      //Guard against 1 result.
       if(!is_array($cablecast_updated_shows)) {
         $cablecast_updated_shows = array($cablecast_updated_shows);
       }
 
       foreach($cablecast_updated_shows as $show) {
-          watchdog("Cablecast", "Syncing show: @showID", array('@showID' => $show->ShowID));
           $sql = 'SELECT entity_id FROM {field_data_cablecast_show_id} cc WHERE cc.cablecast_show_id_value = :show_id';
           $nid = db_query($sql,
             array(
@@ -405,9 +415,21 @@ function _cablecast_is_channel_changed($node, $channel) {
 }
 
 function _cablecast_is_run_changed($node, $run, $channel_id) {
+  // We need to convert the dates so they can be compared.
+  // We are going to assume that the web server and cablecast 
+  // server are set to the same time zone
+  $nodeStart = new DateTime($node->cablecast_schedule_start_time['und'][0]['value'],
+                            new DateTimeZone('UTC'));
+  $runStart = new DateTime($run->StartTime, 
+                            new DateTimeZone($node->cablecast_schedule_start_time['und'][0]['timezone']));
+  $nodeEnd = new DateTime($node->cablecast_schedule_end_time['und'][0]['value'],
+                            new DateTimeZone('UTC'));
+  $runEnd = new DateTime($run->EndTime, 
+                            new DateTimeZone($node->cablecast_schedule_end_time['und'][0]['timezone']));
+
   return !($node->cablecast_schedule_item_id['und'][0]['value'] == $run->ScheduleID &&
-           $node->cablecast_schedule_start_time['und'][0]['value'] == $run->StartTime &&
-           $node->cablecast_schedule_end_time['und'][0]['value'] == $run->EndTime &&
+           $nodeStart == $runStart &&
+           $nodeEnd == $runEnd &&
            $node->cablecast_schedule_show_id['und'][0]['value'] == $run->ShowID &&
            $node->cablecast_schedule_channel_id['und'][0]['value'] == $channel_id);
 }
