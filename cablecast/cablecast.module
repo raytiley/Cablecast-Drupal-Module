@@ -167,7 +167,7 @@ function _cablecast_sync_schedule($client) {
         }
       }
 
-      if(_cablecast_is_run_changed($node, $run, $channel->ChannelID)) {
+      if($nid == FALSE || _cablecast_is_run_changed($node, $run, $channel->ChannelID)) {
 
         $node->cablecast_schedule_item_id['und'][0]['value'] = $run->ScheduleID;
         $node->cablecast_schedule_start_time['und'][0]['value'] = gmdate('Y-m-d\TH:i:s', 
