@@ -418,7 +418,6 @@ function _cablecast_is_run_changed($node, $run, $channel_id) {
   // We need to convert the dates so they can be compared.
   // We are going to assume that the web server and cablecast 
   // server are set to the same time zone
-  try {
   $nodeStart = new DateTime($node->cablecast_schedule_start_time['und'][0]['value'],
                             new DateTimeZone('UTC'));
   $runStart = new DateTime($run->StartTime, 
@@ -427,10 +426,7 @@ function _cablecast_is_run_changed($node, $run, $channel_id) {
                             new DateTimeZone('UTC'));
   $runEnd = new DateTime($run->EndTime, 
                             new DateTimeZone($node->cablecast_schedule_end_time['und'][0]['timezone']));
-  }
-  catch (Exception $ex) {
-    watchdog("Cablecast", "Error parsing times for show" . $run->ScheduleID . $ex->getMessage(), NULL, WATCHDOG_ERROR);
-  }
+
   return !($node->cablecast_schedule_item_id['und'][0]['value'] == $run->ScheduleID &&
            $nodeStart == $runStart &&
            $nodeEnd == $runEnd &&
