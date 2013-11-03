@@ -127,16 +127,16 @@ function _cablecast_sync_schedule($client) {
     );
     
     $schedule_events = $client->GetScheduleInformation($params);
+    
+    if(isset($schedule_events->GetScheduleInformationResult->ScheduleInfo) == false) {
+      continue; // No results
+    }
+
     $schedule_events = $schedule_events->GetScheduleInformationResult->ScheduleInfo;
     
-    // Schedule events can be an array, single run, or NULL
     // We need to normalize to an array
     if(!is_array($schedule_events)) {
-      if($schedule_events == NULL) {
-        $schedule_events = array();
-      } else {
         $schedule_events = array($schedule_events);
-      }
     }
 
     foreach($schedule_events as $run) {
@@ -289,12 +289,11 @@ function _cablecast_sync_shows($client) {
       $params = array("LocationID" => $cablecast_location_id, "SearchDate" => $cablecast_last_sync, "DateComparator" => ">");
 
       $cablecast_updated_shows = $client->LastModifiedSearch($params);
-      $cablecast_updated_shows = $cablecast_updated_shows->LastModifiedSearchResult->ShowInfo;
-
-      //Guard against no results.
-      if($cablecast_updated_shows == NULL) {
-        return;
+      if(isset($cablecast_updated_shows->LastModifiedSearchResult->ShowInfo) == false ) {
+        return; // No results
       }
+
+      $cablecast_updated_shows = $cablecast_updated_shows->LastModifiedSearchResult->ShowInfo;
 
       //Guard against 1 result.
       if(!is_array($cablecast_updated_shows)) {
@@ -332,7 +331,9 @@ function _cablecast_sync_shows($client) {
           $node->cablecast_show_trt['und'][0]['value'] = $show->TotalSeconds;
           $node->cablecast_show_event_date['und'][0]['value'] = $show->EventDate;
           $node->cablecast_show_last_modified['und'][0]['value'] = $show->LastModified;
-          $node->cablecast_show_vod_url['und'][0]['value'] = $show->StreamingFileURL;
+          $node->cablecast_show_vod_url['und'][0]['value'] = isset($show->StreamingFileURL) ?
+                                                              $show->StreamingFileURL :
+                                                              '';
           $node->cablecast_project_reference['und'][0]['target_id'] = _cablecast_get_project_nid($show->ProjectID);
 
           //Taxonomy
@@ -340,11 +341,8 @@ function _cablecast_sync_shows($client) {
             $node->cablecast_category['und'][]['tid'] = _cablecast_get_category_term($show->Category);
           }
 
-          watchdog("Cablecast", "Syncing Show: @showName", array('@showName' => $node->title));
-
           //Give Other modules a chance to extract data, specifically custom fields
           module_invoke_all('cablecast_show_presave', $node, $show);
-
           node_save($node);
           $cablecast_last_sync = $show->LastModified;
       }
@@ -382,7 +380,9 @@ function _cablecast_get_category_term($category) {
 }
 
 function _cablecast_is_project_changed($node, $project) {
-  return !($node->cablecast_project_name['und'][0]['value'] == $project->Name &&
+  return !(isset($node->cablecast_project_name) &&
+           isset($node->cablecast_project_description) &&
+           $node->cablecast_project_name['und'][0]['value'] == $project->Name &&
            $node->cablecast_project_description['und'][0]['value'] == $project->Description
           ); 
 }
@@ -409,7 +409,9 @@ function _cablecast_get_channel_nid($channel_id) {
 }
 
 function _cablecast_is_channel_changed($node, $channel) {
-  return !($node->cablecast_channel_id['und'][0]['value'] == $channel->ChannelID &&
+  return !(isset($node->cablecast_channel_id) &&
+           isset($node->cablecast_channel_name) &&
+           $node->cablecast_channel_id['und'][0]['value'] == $channel->ChannelID &&
            $node->cablecast_channel_name['und'][0]['value'] == $channel->Name
     );
 }
@@ -427,9 +429,12 @@ function _cablecast_is_run_changed($node, $run, $channel_id) {
   $runEnd = new DateTime($run->EndTime, 
                             new DateTimeZone($node->cablecast_schedule_end_time['und'][0]['timezone']));
 
-  return !($node->cablecast_schedule_item_id['und'][0]['value'] == $run->ScheduleID &&
-           $nodeStart == $runStart &&
-           $nodeEnd == $runEnd &&
+  return !(isset($node->cablecast_schedule_item_id) &&
+           isset($node->cablecast_schedule_show_id) &&
+           isset($node->cablecast_schedule_channel_id) &&
+           $node->cablecast_schedule_item_id['und'][0]['value'] == $run->ScheduleID &&
            $node->cablecast_schedule_show_id['und'][0]['value'] == $run->ShowID &&
-           $node->cablecast_schedule_channel_id['und'][0]['value'] == $channel_id);
+           $node->cablecast_schedule_channel_id['und'][0]['value'] == $channel_id &&
+           $nodeStart == $runStart &&
+           $nodeEnd == $runEnd);
 }
