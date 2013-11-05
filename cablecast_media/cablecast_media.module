@@ -5,7 +5,6 @@ function cablecast_media_node_presave($node) {
 
     // We only want to get the image if it doesn't already exist
     // This way a user can replace the image after the show is created.
-    var_dump($node);
     if(isset($node->cablecast_show_thumbnail) &&
        $node->cablecast_show_thumbnail['und'][0]['fid'] > 0) {
       return;
