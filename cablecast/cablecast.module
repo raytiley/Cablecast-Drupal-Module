@@ -329,8 +329,10 @@ function _cablecast_sync_shows($client) {
           $node->cablecast_show_cg_title['und'][0]['value'] = $show->Title;
           $node->cablecast_show_comments['und'][0]['value'] = $show->Comments;
           $node->cablecast_show_trt['und'][0]['value'] = $show->TotalSeconds;
-          $node->cablecast_show_event_date['und'][0]['value'] = $show->EventDate;
-          $node->cablecast_show_last_modified['und'][0]['value'] = $show->LastModified;
+          $node->cablecast_show_event_date['und'][0]['value'] = gmdate('Y-m-d\TH:i:s', 
+          strtotime($show->EventDate));
+          $node->cablecast_show_last_modified['und'][0]['value'] = gmdate('Y-m-d\TH:i:s', 
+          strtotime($show->LastModified));
           $node->cablecast_show_vod_url['und'][0]['value'] = isset($show->StreamingFileURL) ?
                                                               $show->StreamingFileURL :
                                                               '';
