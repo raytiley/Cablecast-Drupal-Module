@@ -30,39 +30,15 @@ function cablecast_install() {
   // Save the content type
   node_type_save($cablecast_show);
   node_type_save($cablecast_project);
-
-  // Create all the fields we are adding to our content type.
-  // http://api.drupal.org/api/function/field_create_field/7
   
-  foreach (_cablecast_installed_fields() as $field) {
-    field_create_field($field);
-  }
-
-  // Create all the instances for our fields.
-  // http://api.drupal.org/api/function/field_create_instance/7
-  foreach (_cablecast_installed_show_instances() as $instance) {
-    $instance['entity_type'] = 'node';
-    $instance['bundle'] = $cablecast_show->type;
-    field_create_instance($instance);
-  }
-
-  foreach(_cablecast_installed_project_instances() as $instance) {
-    $instance['entity_type'] = 'node';
-    $instance['bundle'] = $cablecast_project->type;
-    field_create_instance($instance);
-  }
-
-  foreach(_cablecast_installed_channel_instances() as $instance) {
-    $instance['entity_type'] = 'node';
-    $instance['bundle'] = $cablecast_channel->type;
-    field_create_instance($instance);
-  }
-
-  foreach(_cablecast_installed_schedule_item_instances() as $instance) {
-    $instance['entity_type'] = 'node';
-    $instance['bundle'] = $cablecast_schedule_item->type;
-    field_create_instance($instance);
-  }
+  _cablecast_create_fields_and_instances();
+  
+}
+/**
+  Install Producer Field
+*/
+function cablecast_update_7101() {
+  _cablecast_create_fields_and_instances();
 }
 
 function cablecast_uninstall() {
@@ -148,6 +124,51 @@ function cablecast_uninstall() {
   field_purge_batch(1000);
 }
 
+function _cablecast_create_fields_and_instances() {
+  // Create all the fields we are adding to our content type.
+  // http://api.drupal.org/api/function/field_create_field/7
+  
+  foreach (_cablecast_installed_fields() as $field) {
+    if (field_info_field($field['field_name']) == NULL) {
+      field_create_field($field);
+    }
+  }
+
+  // Create all the instances for our fields.
+  // http://api.drupal.org/api/function/field_create_instance/7
+  foreach (_cablecast_installed_show_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'cablecast_show';
+    if (field_info_instance('node', $instance['field_name'], 'cablecast_show') == NULL) {
+      field_create_instance($instance);
+    }
+  }
+
+  foreach(_cablecast_installed_project_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'cablecast_project';
+    if (field_info_instance('node', $instance['field_name'], 'cablecast_project') == NULL) {
+      field_create_instance($instance);
+    }
+  }
+
+  foreach(_cablecast_installed_channel_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'cablecast_channel';
+    if (field_info_instance('node', $instance['field_name'], 'cablecast_channel') == NULL) {
+      field_create_instance($instance);
+    }
+  }
+
+  foreach(_cablecast_installed_schedule_item_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'cablecast_schedule_item';
+    if (field_info_instance('node', $instance['field_name'], 'cablecast_schedule_item') == NULL) {
+      field_create_instance($instance);
+    }
+  }
+}
+
 function _cablecast_installed_fields() {
   $t = get_t();
   return array(
@@ -205,6 +226,12 @@ function _cablecast_installed_fields() {
       'cardinality' => 1,
       'type' => 'text',
     ),
+    'cablecast_show_producer' => array(
+      'field_name' => 'cablecast_show_producer',
+      'cardinality' => 1,
+      'type' => 'text',
+    ),
+    
     // Project Fields
     'cablecast_project_id' => array(
       'field_name' => 'cablecast_project_id',
@@ -360,6 +387,13 @@ function _cablecast_installed_show_instances() {
     'cablecast_show_title' => array(
       'field_name' => 'cablecast_show_title',
       'label' => 'Show Title',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    ),
+    'cablecast_show_producer' => array(
+      'field_name' => 'cablecast_show_producer',
+      'label' => 'Producer',
       'widget' => array(
         'type' => 'text_textfield',
       ),
