@@ -531,7 +531,7 @@ function _cablecast_installed_schedule_item_instances() {
   return array(
     'cablecast_schedule_item_id' => array(
       'field_name' => 'cablecast_schedule_item_id',
-      'label' => 'Scheudle Item ID',
+      'label' => 'Schedule Item ID',
       'widget' => array(
         'type' => 'number',
       ),
@@ -546,7 +546,7 @@ function _cablecast_installed_schedule_item_instances() {
     ),
     'cablecast_schedule_end_time' => array(
       'field_name' => 'cablecast_schedule_end_time',
-      'label' => $t('Start Time'),
+      'label' => $t('End Time'),
       'type' => 'date',
       'widget' => array(
         'type' => 'date_text',

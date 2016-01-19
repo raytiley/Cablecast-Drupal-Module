@@ -12,7 +12,7 @@ function cablecast_node_info() {
       'locked' => TRUE,
     ),
     'cablecast_project' => array(
-      'name' => t('Cablecasst Project'),
+      'name' => t('Cablecast Project'),
       'base' => 'node_content',
       'description' => t('Represents a Cablecast Project.'),
       'has_title' => TRUE,
