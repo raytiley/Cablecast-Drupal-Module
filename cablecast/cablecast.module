@@ -82,18 +82,15 @@ function cablecast_configure_form($form, &$form_state) {
 function cablecast_cron() {
   if($cablecast_server_uri = variable_get('cablecast_server_url', 0)) {
 
-    $cablecast_server_uri = $cablecast_server_uri . "/CablecastWS/CablecastWS.asmx?WSDL";
-    $client = new SoapClient($cablecast_server_uri, array('cache_wsdl' => 0));
-
-
-    _cablecast_sync_channels($client);
-    _cablecast_sync_projects($client);
+    _cablecast_sync_channels();
+    _cablecast_sync_projects();
     _cablecast_sync_shows();
-    _cablecast_sync_schedule($client);
+    _cablecast_sync_schedule();
   }
 }
 
-function _cablecast_sync_schedule($client) {
+function _cablecast_sync_schedule() {
+  $client = _cablecast_create_client();
   watchdog('Cablecast', 'Syncing Schedule');
 
   $channels = $client->GetChannels();
@@ -188,9 +185,9 @@ function _cablecast_sync_schedule($client) {
   node_delete_multiple($schedule_nids);
 }
 
-function _cablecast_sync_channels($client) {
+function _cablecast_sync_channels() {
   watchdog('Cablecast', 'Syncing Channels');
-
+  $client = _cablecast_create_client();
   $channels = $client->GetChannels();
   $channels = $channels->GetChannelsResult->Channel;
   if(!is_array($channels)) {
@@ -224,7 +221,8 @@ function _cablecast_sync_channels($client) {
   }
 }
 
-function _cablecast_sync_projects($client) {
+function _cablecast_sync_projects() {
+  $client = _cablecast_create_client();
   watchdog('Cablecast', 'Syncing Projects');
   //Projects don't have a last modified date.
   //So we need to manually see if they have changed by checking properties
@@ -475,4 +473,10 @@ function _cablecast_is_run_changed($node, $run, $channel_id) {
            $node->cablecast_schedule_channel_id['und'][0]['value'] == $channel_id &&
            $nodeStart == $runStart &&
            $nodeEnd == $runEnd);
+}
+
+function _cablecast_create_client() {
+  $cablecast_server_uri = variable_get('cablecast_server_url');
+  $cablecast_server_uri = $cablecast_server_uri . "/CablecastWS/CablecastWS.asmx?WSDL";
+  return new SoapClient($cablecast_server_uri, array('cache_wsdl' => 0));
 }
