@@ -401,7 +401,12 @@ function _cablecast_sync_shows() {
 
           if (count($show->vods) > 0) {
               $vod = _cablecast_extract_id($show->vods[0], $payload->vods);
-              $node->cablecast_show_vod_url['und'][0]['value'] = $vod->url;
+              $transaction = _cablecast_extract_id($vod->lastTransaction, $payload->vodTransactions);
+              if ($transaction->transactionType == 5) {
+                $node->cablecast_show_vod_url['und'][0]['value'] = $vod->url;
+              } else {
+                $node->cablecast_show_vod_url['und'] = array();
+              }
           }
 
           if ($show->producer > 0) {
