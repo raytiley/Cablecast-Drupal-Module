@@ -306,40 +306,20 @@ function _cablecast_get_shows_payload() {
   $cablecast_sync_index = variable_get("cablecast_sync_index", 0);
   $cablecast_server_uri = variable_get('cablecast_server_url', 0);
 
-  $json_search = "{\"savedShowSearch\":{\"query\":{\"groups\":[{\"orAnd\":\"and\",\"filters\":[{\"field\":\"lastModified\",\"operator\":\"greaterThan\",\"searchValue\":\"$cablecast_last_sync\"}]}],\"sortOptions\":[{\"field\":\"lastModified\",\"descending\":false},{\"field\":\"title\",\"descending\":false}]},\"name\":\"\"}}";
+  // Load results for hard coded saved search.
+  $search_id = 1234; // TODO - put your saved show search here.
+  $search_json = file_get_contents("$cablecast_server_uri/cablecastapi/v1/shows/search/advanced/$search_id");
+  $result = json_decode($search_json);
 
-  $opts = array('http' =>
-      array(
-          'method'  => 'POST',
-          'header'  => 'Content-Type: application/json',
-          'content' => $json_search,
-          'ignore_errors' => true
-      )
-  );
-  $context = stream_context_create($opts);
-  $result = file_get_contents("$cablecast_server_uri/cablecastapi/v1/shows/search/advanced", false, $context);
-  $result = json_decode($result);
-
-
-  $total_result_count = count($result->savedShowSearch->results);
-  if ($total_result_count <= $cablecast_sync_index) {
-    $cablecast_sync_index = 0;
-    variable_set("cablecast_sync_index", $cablecast_sync_index);
-  }
-
-  $ids = array_slice($result->savedShowSearch->results, $cablecast_sync_index, 100);
-  $processing_result_count = count($ids);
-  $end_index = $cablecast_sync_index + $processing_result_count;
-
-  variable_set("cablecast_sync_total_result_count", $total_result_count);
-
+  // Build a query string of the first 25 results of the search.
+  $ids = array_slice($result->savedShowSearch->results, $cablecast_sync_index, 25);
   $id_query = "";
   foreach ($ids as $id) {
     $id_query .= "&ids[]=$id";
   }
 
+  // Load the show records from ids above
   $url = "$cablecast_server_uri/cablecastapi/v1/shows?page_size=100&include=reel,vod,vodtransaction,project,producer$id_query";
-
   $shows_json = file_get_contents($url);
   $shows_payload = json_decode($shows_json);
 
